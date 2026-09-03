@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCO Workspace</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --navy:    #1B3A6B;
+  --navy2:   #142d54;
+  --teal:    #0E7490;
+  --teal2:   #0c6a82;
+  --sky:     #E0F2FE;
+  --white:   #FFFFFF;
+  --graybg:  #F8FAFC;
+  --gray1:   #F1F5F9;
+  --gray2:   #E2E8F0;
+  --gray3:   #94A3B8;
+  --text1:   #0F172A;
+  --text2:   #475569;
+  --border:  #CBD5E1;
+  --green:   #10B981;
+  --amber:   #F59E0B;
+  --red:     #EF4444;
+  --purple:  #8B5CF6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--graybg);
+  color: var(--text1);
+  min-height: 100vh;
+}
+
+/* ── LOGIN ── */
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
+}
+.login-box {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 40px;
+  width: 360px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.login-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.login-logo .logo-icon {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--navy), var(--teal));
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+.login-logo h1 { font-size: 20px; font-weight: 700; color: var(--navy); }
+.login-logo p  { font-size: 12px; color: var(--gray3); margin-top: 2px; }
+.login-field { margin-bottom: 16px; }
+.login-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.login-field input {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 14px;
+  outline: none; transition: border-color .2s;
+}
+.login-field input:focus { border-color: var(--teal); }
+.login-btn {
+  width: 100%; padding: 12px;
+  background: linear-gradient(135deg, var(--navy), var(--teal));
+  color: var(--white); border: none;
+  border-radius: 8px; font-size: 14px;
+  font-weight: 600; cursor: pointer;
+  transition: opacity .2s;
+}
+.login-btn:hover { opacity: 0.9; }
+.login-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+/* ── APP SHELL ── */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.header-title { color: var(--white); font-size: 15px; font-weight: 700; }
+.header-subtitle { color: rgba(255,255,255,0.65); font-size: 11px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+#sync-badge {
+  font-size: 11px; padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.9);
+}
+.logout-btn {
+  background: rgba(255,255,255,0.15);
+  color: var(--white); border: none;
+  border-radius: 6px; padding: 5px 12px;
+  font-size: 12px; cursor: pointer;
+  transition: background .2s;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* ── NAV TABS ── */
+.nav-bar {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray2);
+  padding: 0 24px;
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+}
+.nav-tab {
+  padding: 12px 18px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text2);
+  border: none; background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all .2s;
+}
+.nav-tab:hover { color: var(--navy); }
+.nav-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--teal);
+  font-weight: 600;
+}
+
+/* ── MAIN CONTENT ── */
+.main { flex: 1; padding: 20px 24px; }
+
+.scope-panel { display: none; }
+.scope-panel.active { display: block; }
+
+/* ── KPI TILES ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-tile {
+  background: var(--white);
+  border-radius: 10px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--teal);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.kpi-label { font-size: 11px; color: var(--text2); font-weight: 500; margin-bottom: 6px; }
+.kpi-value { font-size: 22px; font-weight: 700; color: var(--navy); }
+.kpi-sub   { font-size: 11px; color: var(--gray3); margin-top: 2px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  border: 1px solid var(--gray2);
+}
+
+/* ── TOOLBAR ── */
+.toolbar {
+  display: flex; gap: 8px;
+  align-items: center; flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gray2);
+}
+.toolbar-title { font-size: 13px; font-weight: 600; color: var(--navy); flex: 1; }
+.tb-input {
+  border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px;
+  font-size: 12px; color: var(--text1);
+  outline: none;
+}
+.tb-input:focus { border-color: var(--teal); }
+.tb-btn {
+  background: var(--teal); color: var(--white);
+  border: none; border-radius: 6px;
+  padding: 6px 14px; font-size: 12px;
+  font-weight: 600; cursor: pointer;
+}
+.tb-btn:hover { background: var(--teal2); }
+.tb-btn.outline {
+  background: transparent; color: var(--teal);
+  border: 1px solid var(--teal);
+}
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead tr { background: var(--gray1); }
+th {
+  padding: 8px 10px; text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: var(--navy);
+  border-bottom: 1px solid var(--gray2);
+  white-space: nowrap;
+}
+td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--gray1);
+  color: var(--text1);
+  vertical-align: middle;
+}
+tr:hover td { background: #F0F9FF; }
+.tbl-footer {
+  padding: 8px 16px;
+  font-size: 11px; color: var(--gray3);
+  text-align: right;
+  border-top: 1px solid var(--gray2);
+}
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10.5px; font-weight: 600;
+}
+.badge-green  { background: #D1FAE5; color: #065F46; }
+.badge-red    { background: #FEE2E2; color: #991B1B; }
+.badge-amber  { background: #FEF3C7; color: #92400E; }
+.badge-blue   { background: #DBEAFE; color: #1E40AF; }
+.badge-gray   { background: var(--gray1); color: var(--text2); }
+.badge-purple { background: #EDE9FE; color: #5B21B6; }
+
+/* ── LOADING ── */
+.loading {
+  display: flex; align-items: center;
+  justify-content: center;
+  padding: 60px; color: var(--gray3);
+  font-size: 13px; gap: 10px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--gray2);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+  text-align: center; padding: 60px;
+  color: var(--gray3); font-size: 13px;
+}
+
+/* ── SUNBIT SPECIFIC ── */
+.sb-canceled td { background: #FEF2F2 !important; color: #B91C1C; }
+
+/* ── OCR PLACEHOLDER ── */
+.placeholder-card {
+  text-align: center; padding: 60px 40px;
+}
+.placeholder-icon { font-size: 48px; margin-bottom: 16px; }
+.placeholder-title { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+.placeholder-text  { font-size: 13px; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">🦷</div>
+      <h1>HCO Workspace</h1>
+      <p>PDAE Services — Dental RCM Operations</p>
+    </div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="Enter username" autocomplete="off">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-err">Invalid credentials. Please try again.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">🦷</div>
+      <div>
+        <div class="header-title">HCO Workspace</div>
+        <div class="header-subtitle">PDAE Services — Dental RCM</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span id="sync-badge">⏳ Loading...</span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-bar">
+    <button class="nav-tab active" data-scope="hco"    onclick="switchTab('hco')">🔍 HCO Audits</button>
+    <button class="nav-tab"        data-scope="pp"     onclick="switchTab('pp')">📋 PP Audits</button>
+    <button class="nav-tab"        data-scope="ptar"   onclick="switchTab('ptar')">💰 PTAR</button>
+    <button class="nav-tab"        data-scope="ocr"    onclick="switchTab('ocr')">📄 OCR</button>
+    <button class="nav-tab"        data-scope="pred"   onclick="switchTab('pred')">✅ Pre-D/Pre-Auth</button>
+    <button class="nav-tab"        data-scope="sunbit" onclick="switchTab('sunbit')">💳 Sunbit</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- HCO AUDITS -->
+    <div class="scope-panel active" id="scope-hco">
+      <div class="kpi-row" id="hco-kpis"></div>
+      <div class="card">
+        <div class="toolbar">
+          <span class="toolbar-title">HCO Walkout Audit — All Clinics</span>
+          <select class="tb-input" id="hco-f-clinic" onchange="renderHco()"><option value="">All Clinics</option></select>
+          <select class="tb-input" id="hco-f-cat"    onchange="renderHco()"><option value="">All Categories</option></select>
+          <input  class="tb-input" id="hco-f-search" placeholder="Search PID…" oninput="renderHco()" style="width:120px;">
+          <button class="tb-btn outline" onclick="exportCSV('hco')">⬇ Export</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Audit Date</th><th>DOS</th><th>Patient ID</th>
+              <th>Insurance</th><th>Procedure</th><th>Doctor</th>
+              <th>HCO Comment</th><th>Onshore Comment</th>
+              <th>Initials</th><th>Clinic</th><th>Category</th><th>Reason</th>
+            </tr></thead>
+            <tbody id="hco-tbody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-footer" id="hco-footer"></div>
+      </div>
+    </div>
+
+    <!-- PP AUDITS -->
+    <div class="scope-panel" id="scope-pp">
+      <div class="kpi-row" id="pp-kpis"></div>
+      <div class="card">
+        <div class="toolbar">
+          <span class="toolbar-title">PP Audits — All Clinics</span>
+          <select class="tb-input" id="pp-f-clinic" onchange="renderPp()"><option value="">All Clinics</option></select>
+          <select class="tb-input" id="pp-f-cat"    onchange="renderPp()"><option value="">All Categories</option></select>
+          <input  class="tb-input" id="pp-f-search" placeholder="Search PID…" oninput="renderPp()" style="width:120px;">
+          <button class="tb-btn outline" onclick="exportCSV('pp')">⬇ Export</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr id="pp-thead"></tr></thead>
+            <tbody id="pp-tbody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-footer" id="pp-footer"></div>
+      </div>
+    </div>
+
+    <!-- PTAR -->
+    <div class="scope-panel" id="scope-ptar">
+      <div class="kpi-row" id="ptar-kpis"></div>
+      <div class="card">
+        <div class="toolbar">
+          <span class="toolbar-title">Patient Treatment Accounts Receivable</span>
+          <select class="tb-input" id="ptar-f-clinic"  onchange="renderPtar()"><option value="">All Clinics</option></select>
+          <select class="tb-input" id="ptar-f-paid"    onchange="renderPtar()">
+            <option value="">All Status</option>
+            <option value="Y">Paid</option>
+            <option value="N">Unpaid</option>
+          </select>
+          <input  class="tb-input" id="ptar-f-search"  placeholder="Search name/PID…" oninput="renderPtar()" style="width:140px;">
+          <button class="tb-btn outline" onclick="exportCSV('ptar')">⬇ Export</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Patient ID</th><th>Name</th><th>Clinic</th><th>DOS</th>
+              <th>Outstanding ($)</th><th>Insurance</th><th>Breakdown</th>
+              <th>Comments</th><th>Onshore Note</th><th>Paid?</th><th>Connected?</th>
+            </tr></thead>
+            <tbody id="ptar-tbody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-footer" id="ptar-footer"></div>
+      </div>
+    </div>
+
+    <!-- OCR -->
+    <div class="scope-panel" id="scope-ocr">
+      <div class="card placeholder-card">
+        <div class="placeholder-icon">📄</div>
+        <div class="placeholder-title">OCR — No Data Yet</div>
+        <div class="placeholder-text">OCR data will appear here once records are available in HCO_Master_Input.<br>This tab will auto-update when data is added.</div>
+      </div>
+    </div>
+
+    <!-- PRE-D / PRE-AUTH -->
+    <div class="scope-panel" id="scope-pred">
+      <div class="kpi-row" id="pred-kpis"></div>
+      <div class="card">
+        <div class="toolbar">
+          <span class="toolbar-title">Pre-D / Pre-Authorization</span>
+          <select class="tb-input" id="pred-f-clinic"  onchange="renderPred()"><option value="">All Clinics</option></select>
+          <select class="tb-input" id="pred-f-cat"     onchange="renderPred()"><option value="">All Status</option></select>
+          <input  class="tb-input" id="pred-f-search"  placeholder="Search PID…" oninput="renderPred()" style="width:120px;">
+          <button class="tb-btn outline" onclick="exportCSV('pred')">⬇ Export</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr id="pred-thead"></tr></thead>
+            <tbody id="pred-tbody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-footer" id="pred-footer"></div>
+      </div>
+    </div>
+
+    <!-- SUNBIT -->
+    <div class="scope-panel" id="scope-sunbit">
+      <div class="kpi-row" id="sb-kpis"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+        <div class="card" style="padding:16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:12px;">Amount by Practice</div>
+          <canvas id="sb-chart-practice" height="180"></canvas>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:12px;">Monthly Funding Trend</div>
+          <canvas id="sb-chart-trend" height="180"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <span class="toolbar-title">💳 Sunbit Transactions</span>
+          <select class="tb-input" id="sb-f-practice" onchange="renderSunbit()"><option value="">All Practices</option></select>
+          <select class="tb-input" id="sb-f-activity" onchange="renderSunbit()">
+            <option value="">All Activity</option>
+            <option value="Purchase">Purchase</option>
+            <option value="Canceled">Canceled</option>
+          </select>
+          <input  class="tb-input" id="sb-f-search"   placeholder="Search patient…" oninput="renderSunbit()" style="width:140px;">
+          <button class="tb-btn outline" onclick="exportCSV('sunbit')">⬇ Export</button>
+          <span id="sb-badge" style="font-size:11px;color:var(--gray3);"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Practice</th><th>Patient</th><th>App ID</th><th>Funding Date</th>
+              <th>Bank Credit</th><th>Total Tx</th><th>Fee</th><th>Paid to Merchant</th>
+              <th>Activity</th><th>Posted Amt</th><th>Posted By</th><th>Comments</th>
+            </tr></thead>
+            <tbody id="sb-tbody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-footer" id="sb-footer"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx8LriDs9t3kfzqqdSS1LdwTgH5P4tOz4jdjNXH7OtTdMEJWwmcaNOHAhmoy9Utbkje/exec';
+const SUNBIT_FILE_ID = '1keaP7mV-zjfGj_Ki1zdaADDknZtHrWIi';
+const PTAR_FILE_ID   = '17E2GJ_a48EZmulo90bhw21ZocaqQStcTcIVORsi0Ow0';
+const CREDS = { 'hco': 'hco@2026', 'admin': 'pdae@2026', 'pdae': 'pdae@2026' };
+
+// ── State ──
+const _data = { hco:[], pp:[], ptar:[], pred:[], sunbit:[] };
+let _activeScope = 'hco';
+let _sbChartP = null, _sbChartT = null;
+
+// ============================================================
+// AUTH
+// ============================================================
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim().toLowerCase();
+  const p = document.getElementById('login-pass').value;
+  if (CREDS[u] && CREDS[u] === p) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function initApp() {
+  setSyncBadge('⏳ Syncing all scopes…');
+  await Promise.all([
+    fetchScope('hco'),
+    fetchScope('pp'),
+    fetchPtar(),
+    fetchScope('pred'),
+    fetchSunbit(),
+  ]);
+  setSyncBadge('✓ Live — ' + new Date().toLocaleTimeString());
+  renderActiveScope();
+}
+
+function setSyncBadge(txt) {
+  document.getElementById('sync-badge').textContent = txt;
+}
+
+// ============================================================
+// FETCH
+// ============================================================
+async function fetchScope(scope) {
+  try {
+    const url = `${WEB_APP_URL}?scope=${scope}&t=${Date.now()}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.rows) _data[scope] = json.rows;
+  } catch(e) {
+    console.warn('fetchScope error', scope, e);
+  }
+}
+
+async function fetchPtar() {
+  try {
+    const url = `${WEB_APP_URL}?scope=ptar_external&fileId=${PTAR_FILE_ID}&t=${Date.now()}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.rows) { _data.ptar = json.rows; return; }
+  } catch(e) {}
+  // fallback: read from HCO_Master_Input PTAR tab
+  await fetchScope('ptar');
+}
+
+async function fetchSunbit() {
+  try {
+    const url = `${WEB_APP_URL}?scope=sunbit&fileId=${SUNBIT_FILE_ID}&t=${Date.now()}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.rows && json.rows.length) { _data.sunbit = json.rows; return; }
+  } catch(e) {}
+  loadSunbitEmbedded();
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(scope) {
+  _activeScope = scope;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.scope === scope));
+  document.querySelectorAll('.scope-panel').forEach(p => p.classList.toggle('active', p.id === 'scope-' + scope));
+  renderActiveScope();
+}
+
+function renderActiveScope() {
+  switch(_activeScope) {
+    case 'hco':    renderHco();    break;
+    case 'pp':     renderPp();     break;
+    case 'ptar':   renderPtar();   break;
+    case 'pred':   renderPred();   break;
+    case 'sunbit': initSunbit();   break;
+  }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmt$(n) { if(!n && n!==0) return '—'; return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtPct(n) { if(!n) return '—'; return Number(n).toFixed(2)+'%'; }
+
+function populateFilter(selId, values) {
+  const sel = document.getElementById(selId);
+  const cur = sel.value;
+  const first = sel.options[0].outerHTML;
+  sel.innerHTML = first + [...new Set(values)].filter(Boolean).sort().map(v=>`<option value="${v}">${v}</option>`).join('');
+  sel.value = cur;
+}
+
+function exportCSV(scope) {
+  const rows = _data[scope];
+  if (!rows || !rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${String(r[h]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = scope + '_export.csv';
+  a.click();
+}
+
+function genericTable(tbodyId, footerId, rows, headers, rowFn) {
+  const tbody = document.getElementById(tbodyId);
+  const footer = document.getElementById(footerId);
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="${headers.length}" class="empty">No records match the current filters.</td></tr>`; footer.textContent = ''; return; }
+  tbody.innerHTML = rows.map(rowFn).join('');
+  if (footer) footer.textContent = `Showing ${rows.length} records`;
+}
+
+// ============================================================
+// HCO AUDITS
+// ============================================================
+function renderHco() {
+  const rows = _data.hco;
+  if (!rows.length) { showLoading('hco-tbody', 12); return; }
+
+  populateFilter('hco-f-clinic', rows.map(r => r['Clinic'] || r['clinic'] || r['Office'] || ''));
+  populateFilter('hco-f-cat',    rows.map(r => r['Category'] || r['category'] || r['Initial Pending Reason'] || ''));
+
+  const fc = document.getElementById('hco-f-clinic').value;
+  const fcat = document.getElementById('hco-f-cat').value;
+  const fs  = (document.getElementById('hco-f-search').value || '').toLowerCase();
+
+  const filtered = rows.filter(r => {
+    const clinic = r['Clinic'] || r['Office'] || '';
+    const cat    = r['Category'] || r['Initial Pending Reason'] || '';
+    const pid    = String(r['Patient ID'] || r['patient id'] || '');
+    if (fc   && clinic !== fc)           return false;
+    if (fcat && cat !== fcat)            return false;
+    if (fs   && !pid.toLowerCase().includes(fs) && !(r['HCO Comment']||'').toLowerCase().includes(fs)) return false;
+    return true;
+  });
+
+  // KPIs
+  const cats = {};
+  filtered.forEach(r => { const c = r['Category']||r['Initial Pending Reason']||'Other'; cats[c]=(cats[c]||0)+1; });
+  const topCat = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+  const clinics = new Set(filtered.map(r=>r['Clinic']||r['Office']||'')).size;
+  document.getElementById('hco-kpis').innerHTML = [
+    {label:'Total Records',   val: filtered.length,           color:'var(--navy)',  icon:'📋'},
+    {label:'Clinics',         val: clinics,                   color:'var(--teal)',  icon:'🏥'},
+    {label:'Top Category',    val: topCat?topCat[0]:'—',      color:'var(--amber)', icon:'⚠️'},
+    {label:'Top Count',       val: topCat?topCat[1]:'—',      color:'var(--red)',   icon:'🔴'},
+  ].map(k=>`<div class="kpi-tile" style="border-left-color:${k.color}"><div class="kpi-label">${k.icon} ${k.label}</div><div class="kpi-value" style="color:${k.color};font-size:${k.label==='Top Category'?'13px':'22px'}">${k.val}</div></div>`).join('');
+
+  const cols = ['Audit Date','Date of Appointment','Patient ID','Insurance','Procedure Code','Doctor Name','HCO Comment','Onshore Comment','Initials','Clinic','Category','Reason'];
+  const keys = [
+    r => r['Audit Date']||r['audit date']||'',
+    r => r['Date of Appointment']||r['dos']||r['DOS']||'',
+    r => r['Patient ID']||r['patient id']||'',
+    r => r['Insurance']||r['insurance']||'',
+    r => r['Procedure Code']||r['procedure code']||'',
+    r => r['Doctor Name']||r['doctor name']||r['Doctor']||'',
+    r => r['HCO Comment']||r['hco comment']||'',
+    r => r['Onshore Comment']||r['onshore comment']||'',
+    r => r['Initials']||r['initials']||r['HCO Member']||'',
+    r => r['Clinic']||r['Office']||'',
+    r => r['Category']||r['Initial Pending Reason']||'',
+    r => r['Reason']||r['Pending Reason']||'',
+  ];
+
+  genericTable('hco-tbody','hco-footer', filtered, cols, (r,i) =>
+    `<tr>${keys.map(fn=>`<td>${fn(r)||'—'}</td>`).join('')}</tr>`
+  );
+}
+
+// ============================================================
+// PP AUDITS
+// ============================================================
+function renderPp() {
+  const rows = _data.pp;
+  if (!rows.length) { showLoading('pp-tbody', 10); return; }
+
+  const hdrs = Object.keys(rows[0]);
+  document.getElementById('pp-thead').innerHTML = hdrs.map(h=>`<th>${h}</th>`).join('');
+
+  populateFilter('pp-f-clinic', rows.map(r => r['Clinic']||r['clinic']||r['Office']||''));
+  populateFilter('pp-f-cat',    rows.map(r => r['Category']||r['category']||''));
+
+  const fc  = document.getElementById('pp-f-clinic').value;
+  const fcat= document.getElementById('pp-f-cat').value;
+  const fs  = (document.getElementById('pp-f-search').value||'').toLowerCase();
+
+  const filtered = rows.filter(r => {
+    if (fc   && (r['Clinic']||r['Office']||'') !== fc)   return false;
+    if (fcat && (r['Category']||'') !== fcat)             return false;
+    if (fs   && !String(r['Patient ID']||r['patient id']||'').toLowerCase().includes(fs)) return false;
+    return true;
+  });
+
+  const cats = {};
+  filtered.forEach(r => { const c=r['Category']||'Other'; cats[c]=(cats[c]||0)+1; });
+  const top = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('pp-kpis').innerHTML = [
+    {label:'Total Records', val:filtered.length,      color:'var(--navy)', icon:'📋'},
+    {label:'Clinics',       val:new Set(filtered.map(r=>r['Clinic']||r['Office']||'')).size, color:'var(--teal)', icon:'🏥'},
+    {label:'Top Category',  val:top?top[0]:'—',        color:'var(--amber)',icon:'⚠️'},
+    {label:'Top Count',     val:top?top[1]:'—',        color:'var(--red)',  icon:'🔴'},
+  ].map(k=>`<div class="kpi-tile" style="border-left-color:${k.color}"><div class="kpi-label">${k.icon} ${k.label}</div><div class="kpi-value" style="color:${k.color};font-size:${k.label==='Top Category'?'13px':'22px'}">${k.val}</div></div>`).join('');
+
+  genericTable('pp-tbody','pp-footer', filtered, hdrs, r =>
+    `<tr>${hdrs.map(h=>`<td>${r[h]||'—'}</td>`).join('')}</tr>`
+  );
+}
+
+// ============================================================
+// PTAR
+// ============================================================
+function renderPtar() {
+  const rows = _data.ptar;
+  if (!rows.length) { showLoading('ptar-tbody', 11); return; }
+
+  const getV = (r, ...keys) => { for(const k of keys){ const v=r[k]||r[k.toLowerCase()]||r[k.toUpperCase()]||''; if(v) return v; } return ''; };
+
+  populateFilter('ptar-f-clinic', rows.map(r => getV(r,'Clinic','clinic')));
+
+  const fc  = document.getElementById('ptar-f-clinic').value;
+  const fp  = document.getElementById('ptar-f-paid').value;
+  const fs  = (document.getElementById('ptar-f-search').value||'').toLowerCase();
+
+  const filtered = rows.filter(r => {
+    const clinic = getV(r,'Clinic','clinic');
+    const paid   = getV(r,'Paid?','Paid','paid');
+    const pid    = String(getV(r,'Patient ID','Patient Id','patient_id'));
+    const name   = getV(r,'PT Name','Pt Name','pt_name','name');
+    if (fc && clinic !== fc) return false;
+    if (fp && paid !== fp)   return false;
+    if (fs && !pid.toLowerCase().includes(fs) && !name.toLowerCase().includes(fs)) return false;
+    return true;
+  });
+
+  // KPIs
+  const totalOut = filtered.reduce((s,r) => s + (parseFloat(getV(r,'Outstanding ($)','Outstanding Bal','outstanding_bal'))||0), 0);
+  const paid     = filtered.filter(r => getV(r,'Paid?','Paid','paid') === 'Y').length;
+  const pending  = filtered.length - paid;
+  document.getElementById('ptar-kpis').innerHTML = [
+    {label:'Total Accounts',    val: filtered.length,     color:'var(--navy)', icon:'👥'},
+    {label:'Outstanding',       val: fmt$(totalOut),      color:'var(--red)',  icon:'💰'},
+    {label:'Paid',              val: paid,                color:'var(--green)',icon:'✅'},
+    {label:'Pending',           val: pending,             color:'var(--amber)',icon:'⏳'},
+  ].map(k=>`<div class="kpi-tile" style="border-left-color:${k.color}"><div class="kpi-label">${k.icon} ${k.label}</div><div class="kpi-value" style="color:${k.color};font-size:18px">${k.val}</div></div>`).join('');
+
+  const tbody = document.getElementById('ptar-tbody');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty">No records match.</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(r => {
+    const paid = getV(r,'Paid?','Paid','paid');
+    const out  = parseFloat(getV(r,'Outstanding ($)','Outstanding Bal'))||0;
+    return `<tr>
+      <td>${getV(r,'Patient ID','Patient Id','patient_id')||'—'}</td>
+      <td>${getV(r,'PT Name','Pt Name','pt_name')||'—'}</td>
+      <td><span class="badge badge-blue">${getV(r,'Clinic','clinic')||'—'}</span></td>
+      <td>${getV(r,'DOS','Dos','dos')||'—'}</td>
+      <td style="font-weight:600;color:var(--red)">$${out.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td>${getV(r,'Insurance','insurance')||'—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${getV(r,'New Breakdown','Breakdown','breakdown')}">${getV(r,'New Breakdown','Breakdown','breakdown')||'—'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${getV(r,'Detailed Comments Sm','Comments SM','Call Rail')}">${getV(r,'Detailed Comments Sm','Comments SM','Call Rail')||'—'}</td>
+      <td>${getV(r,'Onshore Note','Onshore note')||'—'}</td>
+      <td><span class="badge ${paid==='Y'?'badge-green':'badge-amber'}">${paid==='Y'?'✅ Paid':'⏳ Pending'}</span></td>
+      <td><span class="badge ${getV(r,'Connected','connected')==='Y'?'badge-green':'badge-gray'}">${getV(r,'Connected','connected')||'—'}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ptar-footer').textContent = `Showing ${filtered.length} of ${rows.length} accounts · Outstanding: ${fmt$(totalOut)}`;
+}
+
+// ============================================================
+// PRE-D / PRE-AUTH
+// ============================================================
+function renderPred() {
+  const rows = _data.pred;
+  if (!rows.length) { showLoading('pred-tbody', 12); return; }
+
+  const hdrs = Object.keys(rows[0]);
+  document.getElementById('pred-thead').innerHTML = hdrs.map(h=>`<th>${h}</th>`).join('');
+
+  populateFilter('pred-f-clinic', rows.map(r => r['Clinic']||r['clinic']||''));
+  populateFilter('pred-f-cat',    rows.map(r => r['Category']||r['category']||''));
+
+  const fc  = document.getElementById('pred-f-clinic').value;
+  const fcat= document.getElementById('pred-f-cat').value;
+  const fs  = (document.getElementById('pred-f-search').value||'').toLowerCase();
+
+  const filtered = rows.filter(r => {
+    if (fc   && (r['Clinic']||'') !== fc)    return false;
+    if (fcat && (r['Category']||'') !== fcat) return false;
+    if (fs   && !String(r['Patient ID']||'').toLowerCase().includes(fs)) return false;
+    return true;
+  });
+
+  const cats = {};
+  filtered.forEach(r => { const c=r['Category']||'Other'; cats[c]=(cats[c]||0)+1; });
+  const top = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+  const approved = filtered.filter(r => (r['Category']||'').includes('Approved')).length;
+  const denied   = filtered.filter(r => (r['Category']||'').includes('Denied')).length;
+
+  document.getElementById('pred-kpis').innerHTML = [
+    {label:'Total Requests', val:filtered.length,  color:'var(--navy)', icon:'📋'},
+    {label:'Approved',       val:approved,          color:'var(--green)',icon:'✅'},
+    {label:'Denied',         val:denied,            color:'var(--red)',  icon:'❌'},
+    {label:'Top Status',     val:top?top[0]:'—',    color:'var(--teal)', icon:'📊'},
+  ].map(k=>`<div class="kpi-tile" style="border-left-color:${k.color}"><div class="kpi-label">${k.icon} ${k.label}</div><div class="kpi-value" style="color:${k.color};font-size:${k.label==='Top Status'?'13px':'22px'}">${k.val}</div></div>`).join('');
+
+  genericTable('pred-tbody','pred-footer', filtered, hdrs, r =>
+    `<tr>${hdrs.map(h=>`<td>${r[h]||'—'}</td>`).join('')}</tr>`
+  );
+}
+
+// ============================================================
+// SUNBIT
+// ============================================================
+function loadSunbitEmbedded() {
+  _data.sunbit = [
+    {practice:'NEO',bankAmt:4684.80,bankDate:'4/28/2026',patient:'Princess Harrow',appId:'74-555-965',fundDate:'4/24/2026',totalTx:4800,feePct:2.40,feeAmt:115.20,paidToMerchant:4684.80,activity:'Purchase',ptId:'6099',postedDate:'5/15/2026',postedAmt:4800,postedBy:'JO',comments:''},
+    {practice:'NEO',bankAmt:549.60,bankDate:'4/28/2026',patient:'Michael Hailey',appId:'74-557-960',fundDate:'4/24/2026',totalTx:600,feePct:8.40,feeAmt:50.40,paidToMerchant:549.60,activity:'Purchase',ptId:'',postedDate:'',postedAmt:600,postedBy:'',comments:'Already posted'},
+    {practice:'NWK',bankAmt:1266.83,bankDate:'5/28/2026',patient:'Kimberly Lakes',appId:'73-893-088',fundDate:'5/26/2026',totalTx:1383,feePct:8.40,feeAmt:116.17,paidToMerchant:1266.83,activity:'Purchase',ptId:'920',postedDate:'6/10/2026',postedAmt:1383,postedBy:'SM',comments:''},
+    {practice:'BLM',bankAmt:315.35,bankDate:'8/25/2026',patient:'Moustapha Diaby',appId:'72-055-572',fundDate:'8/20/2026',totalTx:350,feePct:9.90,feeAmt:34.65,paidToMerchant:315.35,activity:'Purchase',ptId:'9436',postedDate:'8/20/2026',postedAmt:350,postedBy:'ag',comments:'already posted'},
+  ];
+  document.getElementById('sb-badge').textContent = '⚠ Sample data';
+}
+
+function initSunbit() {
+  populateFilter('sb-f-practice', _data.sunbit.map(r => r.practice||''));
+  renderSunbit();
+}
+
+function renderSunbit() {
+  const fp  = document.getElementById('sb-f-practice').value;
+  const fa  = document.getElementById('sb-f-activity').value;
+  const fs  = (document.getElementById('sb-f-search').value||'').toLowerCase();
+
+  const filtered = _data.sunbit.filter(r => {
+    if (fp && r.practice !== fp) return false;
+    if (fa && (r.activity||'') !== fa) return false;
+    if (fs && !(r.patient||'').toLowerCase().includes(fs) && !(r.appId||'').toLowerCase().includes(fs)) return false;
+    return true;
+  });
+
+  const purchases = filtered.filter(r => r.activity !== 'Canceled');
+  const cancels   = filtered.filter(r => r.activity === 'Canceled');
+  const totalBank = purchases.reduce((s,r)=>s+(r.bankAmt||0),0);
+  const totalTx   = purchases.reduce((s,r)=>s+(r.totalTx||0),0);
+  const totalFee  = purchases.reduce((s,r)=>s+(r.feeAmt||0),0);
+  const posted    = purchases.filter(r=>r.postedAmt).length;
+
+  document.getElementById('sb-kpis').innerHTML = [
+    {label:'Total Transactions',  val:filtered.length,         color:'var(--navy)', icon:'🧾'},
+    {label:'Purchases',           val:purchases.length,        color:'var(--teal)', icon:'✅'},
+    {label:'Cancellations',       val:cancels.length,          color:'var(--red)',  icon:'❌'},
+    {label:'Bank Amount Credited',val:fmt$(totalBank),         color:'var(--green)',icon:'🏦'},
+    {label:'Total Treatment $',   val:fmt$(totalTx),           color:'var(--navy)', icon:'🦷'},
+    {label:'Total Merchant Fees', val:fmt$(totalFee),          color:'var(--amber)',icon:'💸'},
+    {label:'Posted to Eaglesoft', val:posted+'/'+purchases.length, color:'var(--teal)',icon:'📋'},
+  ].map(k=>`<div class="kpi-tile" style="border-left-color:${k.color}"><div class="kpi-label">${k.icon} ${k.label}</div><div class="kpi-value" style="color:${k.color};font-size:16px">${k.val}</div></div>`).join('');
+
+  // Charts
+  const byP={};
+  purchases.forEach(r=>{byP[r.practice||'?']=(byP[r.practice||'?']||0)+(r.bankAmt||0);});
+  const ctx1=document.getElementById('sb-chart-practice');
+  if(_sbChartP) _sbChartP.destroy();
+  _sbChartP=new Chart(ctx1,{type:'bar',data:{labels:Object.keys(byP),datasets:[{label:'Bank Credit',data:Object.values(byP),backgroundColor:'rgba(14,116,144,0.75)',borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}}});
+
+  const byM={};
+  purchases.forEach(r=>{const d=r.fundDate||r.bankDate||'';if(!d)return;const[m,,y]=d.split('/');if(!m||!y)return;const k=y+'-'+m.padStart(2,'0');byM[k]=(byM[k]||0)+(r.bankAmt||0);});
+  const mKeys=Object.keys(byM).sort();
+  const mLabels=mKeys.map(k=>{const[y,m]=k.split('-');return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+y.slice(2);});
+  const ctx2=document.getElementById('sb-chart-trend');
+  if(_sbChartT) _sbChartT.destroy();
+  _sbChartT=new Chart(ctx2,{type:'line',data:{labels:mLabels,datasets:[{label:'Bank Credit',data:mKeys.map(k=>byM[k]),borderColor:'var(--teal)',backgroundColor:'rgba(14,116,144,0.1)',fill:true,tension:0.3,pointRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}}});
+
+  const tbody=document.getElementById('sb-tbody');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="12" class="empty">No transactions match.</td></tr>';return;}
+  tbody.innerHTML=filtered.map(r=>{
+    const isCanceled=r.activity==='Canceled';
+    const act=isCanceled
+      ?'<span class="badge badge-red">❌ Canceled</span>'
+      :'<span class="badge badge-green">✅ Purchase</span>';
+    return `<tr class="${isCanceled?'sb-canceled':''}">
+      <td><b>${r.practice||'—'}</b></td>
+      <td>${r.patient||'—'}</td>
+      <td style="font-family:monospace;font-size:11px">${r.appId||'—'}</td>
+      <td>${r.fundDate||'—'}</td>
+      <td style="text-align:right">${fmt$(r.bankAmt)}</td>
+      <td style="text-align:right">${fmt$(r.totalTx)}</td>
+      <td style="text-align:right">${fmt$(r.feeAmt)} <span style="font-size:10px;color:var(--gray3)">(${fmtPct(r.feePct)})</span></td>
+      <td style="text-align:right">${fmt$(r.paidToMerchant)}</td>
+      <td>${act}</td>
+      <td style="text-align:right">${fmt$(r.postedAmt)}</td>
+      <td>${r.postedBy||'—'}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.comments||''}">${r.comments||'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('sb-footer').textContent=`Showing ${filtered.length} of ${_data.sunbit.length} transactions`;
+}
+
+// ============================================================
+// LOADING HELPER
+// ============================================================
+function showLoading(tbodyId, cols) {
+  const el = document.getElementById(tbodyId);
+  if (el) el.innerHTML = `<tr><td colspan="${cols}"><div class="loading"><div class="spinner"></div> Loading live data…</div></td></tr>`;
+}
+</script>
+</body>
+</html>
