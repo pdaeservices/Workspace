@@ -516,26 +516,31 @@ const _filters = {}; // scope → filter active category
 
 // ── LIVE DATA ─────────────────────────────────────────────────────────────────
 async function fetchScope(scope){
-  setBadge('loading');
   try {
     const url = `${WEB_APP_URL}?scope=${encodeURIComponent(scope)}&t=${Date.now()}`;
     const res = await fetch(url);
     const data = await res.json();
     if(data.error) throw new Error(data.error);
     _live[scope] = data;
-    setBadge('ok');
     return data;
   } catch(e) {
     console.warn('Fetch failed:',scope,e);
-    setBadge('error');
     return null;
   }
 }
 
 async function fetchAll(){
-  const scopes = ['hco','pp','ptar','ocr','pred','sunbit'];
-  await Promise.all(scopes.map(s => fetchScope(s)));
+  setBadge('loading');
+  try {
+    const scopes = ['hco','pp','ptar','ocr','pred'];
+    await Promise.all(scopes.map(s => fetchScope(s)));
+    setBadge('ok');
+  } catch(e) {
+    setBadge('error');
+  }
 }
+
+
 
 function getRows(scope){
   return (_live[scope] && _live[scope].rows) ? _live[scope].rows : [];
