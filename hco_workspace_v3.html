@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HCO Workspace</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --navy:#1F4E78;--navy-dark:#163a5a;--navy-light:#2E6DA4;
+  --teal:#1C7293;--teal-light:#E0F2FE;
+  --amber:#F59E0B;--amberbg:#FEF3C7;
+  --bg:#EEF2F7;--card:#FFFFFF;--border:#DDE5EF;
+  --text:#1A202C;--text2:#64748B;--text3:#94A3B8;
+  --red:#EF4444;--redbg:#FEE2E2;
+  --green:#16A34A;--greenbg:#DCFCE7;
+  --gray:#F1F5F9;
+  --grad:linear-gradient(135deg,#1F4E78 0%,#1C7293 100%);
+  --shadow:0 1px 3px rgba(31,78,120,.08),0 4px 12px rgba(31,78,120,.06);
+  --shadow-hover:0 4px 16px rgba(31,78,120,.14),0 2px 6px rgba(31,78,120,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
+.wrap{max-width:1060px;margin:0 auto;padding:24px 20px 60px;}
+
+/* Landing */
+#landing{display:block;}
+.land-header{background:var(--grad);padding:28px 32px 24px;border-radius:0 0 20px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:24px;}
+.land-header h1{font-size:22px;font-weight:800;color:#fff;}
+.land-header .sub{font-size:12px;color:rgba(255,255,255,.72);margin-top:3px;}
+.live-dot{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,.8);}
+.live-dot span{width:7px;height:7px;border-radius:50%;background:#4ADE80;box-shadow:0 0 0 2px rgba(74,222,128,.3);display:inline-block;}
+.section-label{font-size:10px;font-weight:800;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;padding:0 32px;margin-bottom:12px;}
+.clinic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;padding:0 32px 40px;}
+.clinic-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;cursor:pointer;transition:box-shadow .18s,transform .18s,border-color .18s;box-shadow:var(--shadow);}
+.clinic-card:hover{box-shadow:var(--shadow-hover);border-color:var(--navy-light);transform:translateY(-2px);}
+.clinic-card .ctop{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.cavatar{width:36px;height:36px;border-radius:10px;background:var(--grad);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.clinic-card .cname{font-size:13px;font-weight:700;}
+.clinic-card .csub{font-size:10.5px;color:var(--text2);margin-top:2px;}
+.clinic-card .cbadge{margin-left:auto;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--greenbg);color:#15803D;}
+.clinic-card .cstats{display:flex;gap:18px;border-top:1px solid var(--border);padding-top:10px;}
+.clinic-card .cstat .clabel{font-size:9px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.clinic-card .cstat .cval{font-size:14px;font-weight:700;color:var(--text);margin-top:2px;}
+
+/* Gate */
+#gate{display:none;max-width:420px;margin:70px auto;padding:0 16px;}
+.gate-card{background:#fff;border-radius:16px;padding:32px;box-shadow:0 8px 32px rgba(31,78,120,.12);}
+.gate-logo{width:48px;height:48px;border-radius:12px;background:var(--grad);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;}
+.gate-card h2{font-size:20px;color:var(--navy);text-align:center;margin-bottom:6px;}
+.gate-card .sub{font-size:12.5px;color:var(--text2);text-align:center;margin-bottom:20px;}
+.gate-back{font-size:12px;color:var(--teal);cursor:pointer;font-weight:600;margin-bottom:14px;display:inline-block;}
+.selclinic{display:flex;align-items:center;gap:10px;background:var(--gray);border-radius:10px;padding:10px 12px;margin-bottom:16px;}
+.selclinic .sname{font-size:13px;font-weight:700;}
+.selclinic .ssub{font-size:10.5px;color:var(--text2);}
+.gate-card input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;margin-bottom:10px;}
+.gate-card input:focus{outline:none;border-color:var(--navy);}
+.gate-err{color:var(--red);font-size:12px;margin-bottom:10px;display:none;}
+.gate-note{font-size:11px;color:var(--text3);margin-top:16px;text-align:center;line-height:1.5;}
+
+/* App */
+#appview{display:none;}
+.app-bar{background:var(--grad);padding:18px 28px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.app-bar .eyebrow{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:700;}
+.app-bar h1{font-size:19px;font-weight:800;color:#fff;margin:4px 0 2px;}
+.app-bar .sub{font-size:11.5px;color:rgba(255,255,255,.7);}
+.app-bar .actions{display:flex;align-items:center;gap:8px;}
+
+/* Tabs */
+.scope-tabs{display:flex;gap:0;background:#fff;border-radius:12px;padding:4px;box-shadow:var(--shadow);border:1px solid var(--border);overflow-x:auto;margin:20px 0;}
+.scope-tab{background:none;border:none;border-radius:8px;color:var(--text2);font-weight:600;font-size:12px;padding:8px 14px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;font-family:inherit;}
+.scope-tab:hover{color:var(--navy);background:var(--gray);}
+.scope-tab.active{background:var(--grad);color:#fff;box-shadow:0 2px 8px rgba(31,78,120,.25);}
+.scope-panel{display:none;}
+.scope-panel.active{display:block;}
+
+/* KPI Row */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);}
+.kpi .label{font-size:9.5px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.kpi .value{font-size:22px;font-weight:800;margin-top:6px;color:var(--navy);}
+.kpi .value.red{color:var(--red);}
+.kpi .value.green{color:var(--green);}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card h3{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+.card .sub{font-size:11px;color:var(--text2);margin-bottom:14px;}
+
+/* Today Grid */
+.today-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;}
+.today-card{border:1px solid var(--border);border-radius:10px;padding:13px;cursor:pointer;transition:box-shadow .15s,transform .15s;background:#fff;}
+.today-card:hover{box-shadow:0 4px 12px rgba(31,78,120,.12);transform:translateY(-1px);}
+.today-card .cathead{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;margin-bottom:10px;}
+.today-card .catdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.today-card .row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;color:var(--text2);}
+.today-card .row b{color:var(--text);font-weight:700;}
+.today-card .row.od b{color:var(--red);}
+
+/* Filter row */
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;background:#F8FAFC;border-radius:8px;padding:8px 12px;border:1px solid var(--border);}
+.filter-row label{font-size:11px;color:var(--text2);font-weight:700;}
+.filter-row select,.filter-row input[type=text]{font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;background:#fff;font-family:inherit;color:var(--text);}
+.filter-row select:focus,.filter-row input:focus{outline:none;border-color:var(--navy);}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;}
+th{text-align:left;background:linear-gradient(to bottom,#F8FAFD,#F1F5F9);color:var(--text2);font-weight:700;padding:8px 10px;border-bottom:2px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;}
+td{padding:8px 10px;border-bottom:1px solid #EEF2F6;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#F8FAFD;}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.badge.open{background:#FEF3F2;color:#C0392B;border:1px solid #FECACA;}
+.badge.resolved{background:#F0FFF4;color:#16A34A;border:1px solid #BBF7D0;}
+.badge.overdue{background:var(--redbg);color:#B91C1C;border:1px solid #FECACA;}
+.badge.pending{background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;}
+.clinic-chip{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--teal-light);color:var(--navy);}
+
+/* Buttons */
+button{font-family:inherit;font-size:12px;font-weight:700;padding:7px 14px;border-radius:7px;border:none;background:var(--grad);color:#fff;cursor:pointer;transition:opacity .15s;}
+button:hover{opacity:.88;}
+button.sec{background:#fff;color:var(--navy);border:1.5px solid var(--border);}
+button.sec:hover{border-color:var(--navy);background:var(--gray);}
+button.sm{padding:4px 9px;font-size:10.5px;}
+button.sw{background:rgba(255,255,255,.15);color:#fff;font-size:11.5px;padding:7px 13px;border:1px solid rgba(255,255,255,.3);}
+button.sw:hover{background:rgba(255,255,255,.25);}
+
+/* Charts */
+.chart-wrap{position:relative;width:100%;height:210px;margin-bottom:12px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Pagination */
+.pager{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;}
+.page-btn{padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);background:#fff;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--text2);}
+.page-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+/* Empty */
+.empty{text-align:center;padding:32px;color:var(--text3);font-size:13px;}
+
+/* Modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
+.modal-box{background:#fff;border-radius:12px;padding:22px;width:440px;max-width:92vw;max-height:82vh;overflow-y:auto;}
+.modal-box h3{font-size:15px;margin-bottom:12px;}
+.modal-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--border);}
+.modal-row:last-child{border:none;}
+.modal-row .lbl{color:var(--text2);font-weight:600;}
+
+/* Clinic breakdown table */
+.breakdown-tbl th,.breakdown-tbl td{font-size:11.5px;padding:7px 10px;}
+
+/* Sync badge */
+#sync-badge span{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600;}
+
+@media(max-width:640px){.grid2{grid-template-columns:1fr;}.clinic-grid{padding:0 16px 40px;}.land-header{padding:20px 16px;}}
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="landing">
+  <div class="land-header">
+    <div>
+      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:700;margin-bottom:4px;">PDAE Services · Operations Support</div>
+      <h1>HCO Workspace</h1>
+      <div class="sub" id="land-date"></div>
+    </div>
+    <div class="live-dot"><span></span> All clinics monitored</div>
+  </div>
+  <div class="section-label">Select your clinic to continue</div>
+  <div class="clinic-grid" id="clinic-grid"></div>
+</div>
+
+<!-- GATE -->
+<div id="gate">
+  <div class="gate-card">
+    <span class="gate-back" id="gate-back">← Back to all clinics</span>
+    <div class="gate-logo">🏥</div>
+    <h2>HCO Workspace</h2>
+    <p class="sub">Sign in to access your clinic's data.</p>
+    <div class="selclinic" id="gate-selclinic" style="display:none;">
+      <div class="cavatar" id="gate-avatar" style="width:28px;height:28px;border-radius:8px;font-size:11px;"></div>
+      <div><div class="sname" id="gate-selname"></div><div class="ssub" id="gate-selsub"></div></div>
+    </div>
+    <input type="text" id="gate-email" placeholder="Email or username">
+    <input type="password" id="gate-password" placeholder="Password">
+    <div class="gate-err" id="gate-err">Incorrect credentials. Try again.</div>
+    <button style="width:100%;" id="gate-enter">Enter workspace</button>
+    <div class="gate-note">Temporary password for all users: <b>Password1234</b></div>
+  </div>
+</div>
+
+<!-- APP VIEW -->
+<div id="appview">
+<div class="app-bar">
+  <div>
+    <div class="eyebrow">Operations Support Team</div>
+    <h1 id="user-title">Workspace</h1>
+    <div class="sub" id="user-clinics"></div>
+  </div>
+  <div class="actions">
+    <div id="sync-badge"></div>
+    <button class="sw" id="btn-switch">Switch user</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="scope-tabs">
+    <button class="scope-tab active" data-scope="hco">🔍 HCO Audits</button>
+    <button class="scope-tab" data-scope="pp">📋 PP Audits</button>
+    <button class="scope-tab" data-scope="ptar">💰 PTAR</button>
+    <button class="scope-tab" data-scope="ocr">📄 OCR</button>
+    <button class="scope-tab" data-scope="pred">✅ Pre-D/Pre-Auth</button>
+    <button class="scope-tab" data-scope="sunbit">💳 Sunbit</button>
+  </div>
+
+  <!-- HCO AUDITS -->
+  <div class="scope-panel active" id="scope-hco">
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Total Records</div><div class="value" id="hco-kpi-total">—</div></div>
+      <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="hco-kpi-open">—</div></div>
+      <div class="kpi"><div class="label">Resolved</div><div class="value green" id="hco-kpi-resolved">—</div></div>
+      <div class="kpi"><div class="label">Overdue 3+ days</div><div class="value red" id="hco-kpi-overdue">—</div></div>
+    </div>
+    <div class="card">
+      <h3>Today at a glance</h3>
+      <p class="sub" id="hco-today-sub">Open items across your clinic(s) by category — click a card to filter the list below.</p>
+      <div class="today-grid" id="hco-today-grid"></div>
+    </div>
+    <div class="card">
+      <h3>Pending items by category</h3>
+      <p class="sub">All open items — click a slice to filter the table below.</p>
+      <div class="chart-wrap"><canvas id="hco-pie"></canvas></div>
+    </div>
+    <div class="card" id="hco-clinic-breakdown" style="display:none;">
+      <h3>Clinic breakdown</h3>
+      <p class="sub">How each clinic stands across this scope.</p>
+      <div class="tbl-wrap">
+        <table class="breakdown-tbl"><thead><tr><th>Clinic</th><th>Total</th><th>Open</th><th>Resolved</th><th>Overdue</th></tr></thead>
+        <tbody id="hco-breakdown-tbody"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Walkout Audit History</h3>
+      <p class="sub">All records from HCO_Master_Input. Pending = Onshore Comment is blank.</p>
+      <div class="filter-row">
+        <label>Clinic:</label>
+        <select id="hco-f-clinic"><option value="">All clinics</option></select>
+        <label>Category:</label>
+        <select id="hco-f-cat"><option value="">All categories</option></select>
+        <label>Status:</label>
+        <select id="hco-f-status"><option value="">All</option><option value="open">Open</option><option value="resolved">Resolved</option><option value="overdue">Overdue</option></select>
+        <label>Search Patient:</label>
+        <input type="text" id="hco-search" placeholder="e.g. 12345" style="width:110px;">
+        <button class="sec sm" id="hco-clear">Clear</button>
+        <button class="sm" onclick="exportCSV('hco')">⬇ Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Audit Date</th><th>DOS</th><th>Patient ID</th><th>Clinic</th><th>Category</th><th>HCO Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+        <tbody id="hco-tbody"></tbody></table>
+      </div>
+      <div class="empty" id="hco-empty" style="display:none;">No records match this filter.</div>
+      <div class="pager" id="hco-pager"></div>
+    </div>
+  </div>
+
+  <!-- PP AUDITS -->
+  <div class="scope-panel" id="scope-pp">
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Total Records</div><div class="value" id="pp-kpi-total">—</div></div>
+      <div class="kpi"><div class="label">HCO Findings (T6)</div><div class="value red" id="pp-kpi-t6">—</div></div>
+      <div class="kpi"><div class="label">Next Appt Missing (T7)</div><div class="value" style="color:var(--amber)" id="pp-kpi-t7">—</div></div>
+      <div class="kpi"><div class="label">Doc Missing (T8)</div><div class="value" style="color:#7C5CBF" id="pp-kpi-t8">—</div></div>
+    </div>
+    <div class="card">
+      <h3>Issue breakdown</h3>
+      <p class="sub">PP Audit categories from Ashwini's daily emails.</p>
+      <div class="chart-wrap"><canvas id="pp-pie"></canvas></div>
+    </div>
+    <div class="card" id="pp-clinic-breakdown" style="display:none;">
+      <h3>Clinic breakdown</h3>
+      <div class="tbl-wrap">
+        <table class="breakdown-tbl"><thead><tr><th>Clinic</th><th>Total</th><th>Table 6</th><th>Table 7</th><th>Table 8</th></tr></thead>
+        <tbody id="pp-breakdown-tbody"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Recent PP Audit activity</h3>
+      <p class="sub">All records from HCO_Master_Input PP Audits tab.</p>
+      <div class="filter-row">
+        <label>Clinic:</label>
+        <select id="pp-f-clinic"><option value="">All clinics</option></select>
+        <label>Category:</label>
+        <select id="pp-f-cat"><option value="">All categories</option></select>
+        <label>Search Patient:</label>
+        <input type="text" id="pp-search" placeholder="e.g. 2378" style="width:110px;">
+        <button class="sec sm" id="pp-clear">Clear</button>
+        <button class="sm" onclick="exportCSV('pp')">⬇ Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Audit Date</th><th>DOS</th><th>Patient ID</th><th>Clinic</th><th>Category</th><th>Comment</th><th>Insurance</th></tr></thead>
+        <tbody id="pp-tbody"></tbody></table>
+      </div>
+      <div class="empty" id="pp-empty" style="display:none;">No records match this filter.</div>
+      <div class="pager" id="pp-pager"></div>
+    </div>
+  </div>
+
+  <!-- PTAR -->
+  <div class="scope-panel" id="scope-ptar">
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Total Accounts</div><div class="value" id="ptar-kpi-total">—</div></div>
+      <div class="kpi"><div class="label">Outstanding ($)</div><div class="value red" id="ptar-kpi-amount">—</div></div>
+      <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="ptar-kpi-open">—</div></div>
+      <div class="kpi"><div class="label">Resolved</div><div class="value green" id="ptar-kpi-resolved">—</div></div>
+    </div>
+    <div class="card">
+      <h3>Pending by reason</h3>
+      <p class="sub">Outstanding PTAR accounts grouped by category.</p>
+      <div class="chart-wrap"><canvas id="ptar-pie"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>PTAR collection reminders</h3>
+      <p class="sub">All accounts — Onshore Comment blank = pending action.</p>
+      <div class="filter-row">
+        <label>Clinic:</label>
+        <select id="ptar-f-clinic"><option value="">All clinics</option></select>
+        <label>Category:</label>
+        <select id="ptar-f-cat"><option value="">All categories</option></select>
+        <label>Status:</label>
+        <select id="ptar-f-status"><option value="">All</option><option value="open">Open</option><option value="resolved">Resolved</option></select>
+        <label>Search Patient:</label>
+        <input type="text" id="ptar-search" placeholder="Patient ID" style="width:110px;">
+        <button class="sec sm" id="ptar-clear">Clear</button>
+        <button class="sm" onclick="exportCSV('ptar')">⬇ Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Date</th><th>Patient ID</th><th>PT Name</th><th>Clinic</th><th>Outstanding</th><th>Insurance</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
+        <tbody id="ptar-tbody"></tbody></table>
+      </div>
+      <div class="empty" id="ptar-empty" style="display:none;">No records match this filter.</div>
+      <div class="pager" id="ptar-pager"></div>
+    </div>
+  </div>
+
+  <!-- OCR -->
+  <div class="scope-panel" id="scope-ocr">
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Total Claims</div><div class="value" id="ocr-kpi-total">—</div></div>
+      <div class="kpi"><div class="label">Denied</div><div class="value red" id="ocr-kpi-denied">—</div></div>
+      <div class="kpi"><div class="label">Pending</div><div class="value" style="color:var(--amber)" id="ocr-kpi-pending">—</div></div>
+      <div class="kpi"><div class="label">Open (No Onshore Action)</div><div class="value red" id="ocr-kpi-open">—</div></div>
+    </div>
+    <div class="card">
+      <h3>Top outcomes</h3>
+      <div class="chart-wrap"><canvas id="ocr-pie"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>All claims</h3>
+      <p class="sub">All OCR records — Onshore Comment blank = pending action.</p>
+      <div class="filter-row">
+        <label>Clinic:</label>
+        <select id="ocr-f-clinic"><option value="">All clinics</option></select>
+        <label>Category:</label>
+        <select id="ocr-f-cat"><option value="">All categories</option></select>
+        <label>Search Patient:</label>
+        <input type="text" id="ocr-search" placeholder="Patient ID" style="width:110px;">
+        <button class="sec sm" id="ocr-clear">Clear</button>
+        <button class="sm" onclick="exportCSV('ocr')">⬇ Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Date Sent</th><th>Claim ID</th><th>Patient ID</th><th>Clinic</th><th>Insurance</th><th>Submitted</th><th>Paid</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+        <tbody id="ocr-tbody"></tbody></table>
+      </div>
+      <div class="empty" id="ocr-empty" style="display:none;">No records match this filter.</div>
+      <div class="pager" id="ocr-pager"></div>
+    </div>
+  </div>
+
+  <!-- PRE-D -->
+  <div class="scope-panel" id="scope-pred">
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Total Requests</div><div class="value" id="pred-kpi-total">—</div></div>
+      <div class="kpi"><div class="label">Approved</div><div class="value green" id="pred-kpi-approved">—</div></div>
+      <div class="kpi"><div class="label">Denied</div><div class="value red" id="pred-kpi-denied">—</div></div>
+      <div class="kpi"><div class="label">Pending</div><div class="value" style="color:var(--amber)" id="pred-kpi-pending">—</div></div>
+    </div>
+    <div class="card">
+      <h3>Approval &amp; Denial overview</h3>
+      <p class="sub">Approval outcomes (left) — click a slice to filter the table.</p>
+      <div class="grid2">
+        <div class="chart-wrap"><canvas id="pred-approval-chart"></canvas></div>
+        <div class="chart-wrap"><canvas id="pred-denial-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Recent requests</h3>
+      <p class="sub">All Pre-D/Pre-Auth records from HCO_Master_Input.</p>
+      <div class="filter-row">
+        <label>Clinic:</label>
+        <select id="pred-f-clinic"><option value="">All clinics</option></select>
+        <label>Category:</label>
+        <select id="pred-f-cat"><option value="">All categories</option></select>
+        <label>Search Patient:</label>
+        <input type="text" id="pred-search" placeholder="Patient ID" style="width:110px;">
+        <button class="sec sm" id="pred-clear">Clear</button>
+        <button class="sm" onclick="exportCSV('pred')">⬇ Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Date of Request</th><th>Patient ID</th><th>Clinic</th><th>Insurance</th><th>Procedure</th><th>Provider</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Category</th></tr></thead>
+        <tbody id="pred-tbody"></tbody></table>
+      </div>
+      <div class="empty" id="pred-empty" style="display:none;">No records match this filter.</div>
+      <div class="pager" id="pred-pager"></div>
+    </div>
+  </div>
+
+  <!-- SUNBIT -->
+  <div class="scope-panel" id="scope-sunbit">
+    <div id="sb-kpi-row" class="kpi-row"></div>
+    <div class="grid2" style="margin-bottom:16px;">
+      <div class="card" style="margin:0;padding:16px;">
+        <h3>💰 Amount by Practice</h3>
+        <canvas id="sb-chart-practice" height="180"></canvas>
+      </div>
+      <div class="card" style="margin:0;padding:16px;">
+        <h3>📅 Monthly Funding Trend</h3>
+        <canvas id="sb-chart-trend" height="180"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h3>All Transactions</h3>
+      <div class="filter-row">
+        <label>Practice:</label>
+        <select id="sb-f-practice"><option value="">All Practices</option></select>
+        <label>Activity:</label>
+        <select id="sb-f-activity"><option value="">All</option><option value="Purchase">Purchase</option><option value="Canceled">Canceled</option></select>
+        <input type="text" id="sb-search" placeholder="Search patient…" style="width:130px;">
+        <button class="sm" onclick="exportCSV('sunbit')">⬇ Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Practice</th><th>Patient</th><th>Funding Date</th><th>Bank Credit</th><th>Total Tx</th><th>Merchant Fee</th><th>Paid to Merchant</th><th>Activity</th><th>Posted Amt</th></tr></thead>
+        <tbody id="sb-tbody"></tbody></table>
+      </div>
+      <div class="empty" id="sb-empty" style="display:none;">No transactions match this filter.</div>
+      <div class="pager" id="sb-pager"></div>
+    </div>
+  </div>
+</div><!-- /wrap -->
+</div><!-- /appview -->
+
+<!-- Detail modals -->
+<div class="modal-bg" id="hco-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Record Detail</h3><button class="sec sm" onclick="closeModal('hco-modal')">Close</button></div><div id="hco-modal-body"></div></div></div>
+<div class="modal-bg" id="pp-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>PP Audit Detail</h3><button class="sec sm" onclick="closeModal('pp-modal')">Close</button></div><div id="pp-modal-body"></div></div></div>
+<div class="modal-bg" id="ptar-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Patient Account Detail</h3><button class="sec sm" onclick="closeModal('ptar-modal')">Close</button></div><div id="ptar-modal-body"></div></div></div>
+<div class="modal-bg" id="pred-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Pre-D / Pre-Auth Detail</h3><button class="sec sm" onclick="closeModal('pred-modal')">Close</button></div><div id="pred-modal-body"></div></div></div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx8LriDs9t3kfzqqdSS1LdwTgH5P4tOz4jdjNXH7OtTdMEJWwmcaNOHAhmoy9Utbkje/exec';
+const PAGE_SIZE = 25;
+const OVERDUE_DAYS = 3;
+
+const ALL_CLINICS = ['EON','NWK','NEO','BLM','FWC','FWJ','FWH','MAP','BEL','NHA','TLP','MHA'];
+const CLINIC_INFO = {
+  EON:{name:'EON - Academy Dental',manager:'Nyasia Lebron'},
+  NWK:{name:'NWK - Nova Dental',manager:'Briannah Branch'},
+  NEO:{name:'NEO - Nova Dental',manager:'Christie Dawson'},
+  BLM:{name:'BLM - Nova Dental',manager:'Kenicha Santiago'},
+  FWC:{name:'FWC - Marvel Dental (Coldwater)',manager:'Esther Bolanos'},
+  FWJ:{name:'FWJ - Marvel Dental (Jefferson)',manager:'Esther Bolanos'},
+  FWH:{name:'FWH - Marvel Dental (Huntington)',manager:'Esther Bolanos'},
+  MAP:{name:'MAP - Maple Dental',manager:'Stephanie Uballe'},
+  BEL:{name:'BEL - Maple Dental Belleville',manager:'Thalia Rodriguez'},
+  NHA:{name:'NHA - Nova Dental Pennsylvania',manager:'Malika Everett'},
+  TLP:{name:'TLP - Tulip Dental',manager:'Knowledge'},
+  MHA:{name:'MHA - Maple Dental Harrisburg',manager:'Malika Everett'}
+};
+const EMAIL_CLINICS = {
+  'eastorange@academydentalnj.com':['EON'],
+  'newark@novadentalnj.com':['NWK'],
+  'eastorange@novadentalnj.com':['NEO'],
+  'bloomfield@novadentalnj.com':['BLM'],
+  'marveldentalin@gmail.com':['FWC','FWJ'],
+  'marveldentalhtn@gmail.com':['FWH'],
+  'georgetown@mapledentalin.com':['MAP'],
+  'belleville@mapledentalnj.com':['BEL'],
+  'harrisburg@novadentalpa.com':['NHA'],
+  'maplewood@tulipdentalnj.com':['TLP'],
+  'harrisburg@mapledentalpa.com':['MHA'],
+  // Admin credentials
+  'hco':['EON','NWK','NEO','BLM','FWC','FWJ','FWH','MAP','BEL','NHA','TLP','MHA'],
+  'admin':['EON','NWK','NEO','BLM','FWC','FWJ','FWH','MAP','BEL','NHA','TLP','MHA'],
+  'pdae':['EON','NWK','NEO','BLM','FWC','FWJ','FWH','MAP','BEL','NHA','TLP','MHA'],
+  'password':['EON','NWK','NEO','BLM','FWC','FWJ','FWH','MAP','BEL','NHA','TLP','MHA'],
+};
+const PASSWORDS = {
+  'hco':'hco@2026','admin':'pdae@2026','pdae':'pdae@2026','password':'1234',
+};
+const TEMP_PASSWORD = 'Password1234';
+
+const CAT_COLORS = [
+  '#1C7293','#D85A30','#2E75B6','#7C5CBF','#F59E0B','#B45309',
+  '#2E7D32','#5B21B6','#0F766E','#BE185D','#0369A1','#15803D'
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let currentUser = '', myClinics = [], selectedClinic = null;
+const _live = {}; // scope → {rows, headers}
+const _pages = {}; // scope → current page
+const _charts = {}; // scope → Chart instance
+const _filters = {}; // scope → filter active category
+
+// ── LIVE DATA ─────────────────────────────────────────────────────────────────
+async function fetchScope(scope){
+  setBadge('loading');
+  try {
+    const url = `${WEB_APP_URL}?scope=${encodeURIComponent(scope)}&t=${Date.now()}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    _live[scope] = data;
+    setBadge('ok');
+    return data;
+  } catch(e) {
+    console.warn('Fetch failed:',scope,e);
+    setBadge('error');
+    return null;
+  }
+}
+
+async function fetchAll(){
+  const scopes = ['hco','pp','ptar','ocr','pred','sunbit'];
+  await Promise.all(scopes.map(s => fetchScope(s)));
+}
+
+function getRows(scope){
+  return (_live[scope] && _live[scope].rows) ? _live[scope].rows : [];
+}
+
+function filterByClinics(rows, clinicCol){
+  if(myClinics.length === ALL_CLINICS.length) return rows;
+  return rows.filter(r => myClinics.includes(r[clinicCol]));
+}
+
+function setBadge(state){
+  const el = document.getElementById('sync-badge');
+  if(!el) return;
+  const map = {
+    loading:'<span style="background:#EFF6FF;color:#1D4ED8;">⟳ Syncing…</span>',
+    ok:'<span style="background:#F0FFF4;color:#166534;">✓ Live data</span>',
+    error:'<span style="background:#FEE2E2;color:#B91C1C;">✕ Sync error</span>'
+  };
+  el.innerHTML = map[state] || '';
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtMoney(n){ return '$'+Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
+function daysBetween(ds){
+  if(!ds) return 0;
+  const d1=new Date(ds), d2=new Date();
+  return Math.max(0,Math.round((d2-d1)/86400000));
+}
+function isPending(comment){ return !String(comment||'').trim(); }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+function openModal(id){ document.getElementById(id).style.display='flex'; }
+
+function statusBadge(comment, dos){
+  if(!isPending(comment)) return '<span class="badge resolved">Resolved</span>';
+  const days = daysBetween(dos);
+  if(days >= OVERDUE_DAYS) return '<span class="badge overdue">Overdue</span>';
+  return '<span class="badge open">Open</span>';
+}
+
+function makeChart(id, labels, data, type='doughnut'){
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  if(_charts[id]){ _charts[id].destroy(); }
+  _charts[id] = new Chart(ctx, {
+    type,
+    data:{
+      labels,
+      datasets:[{data,backgroundColor:CAT_COLORS.slice(0,labels.length),borderWidth:1}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}
+    }
+  });
+}
+
+function makeBarChart(id, labels, data){
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  if(_charts[id]){ _charts[id].destroy(); }
+  _charts[id] = new Chart(ctx, {
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:CAT_COLORS[0],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}}}}
+  });
+}
+
+function renderPager(scope, total, page, renderFn){
+  const pages = Math.ceil(total/PAGE_SIZE);
+  const el = document.getElementById(`${scope}-pager`);
+  if(!el) return;
+  if(pages <= 1){ el.innerHTML=''; return; }
+  let html = '';
+  for(let i=0;i<pages;i++){
+    html += `<button class="page-btn${i===page?' active':''}" onclick="${renderFn}(${i})">${i+1}</button>`;
+  }
+  el.innerHTML = html;
+}
+
+function populateFilter(selectId, values){
+  const el = document.getElementById(selectId);
+  if(!el) return;
+  const first = el.options[0].text;
+  el.innerHTML = `<option value="">${first}</option>`;
+  [...new Set(values)].filter(Boolean).sort().forEach(v=>{
+    const o = document.createElement('option');
+    o.value = o.textContent = v;
+    el.appendChild(o);
+  });
+}
+
+function exportCSV(scope){
+  const rows = getRows(scope);
+  if(!rows.length){ alert('No data to export.'); return; }
+  const hdrs = _live[scope].headers || [];
+  const csv = [hdrs.join(','), ...rows.map(r=>r.map(v=>JSON.stringify(v||'')).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `${scope}_export_${Date.now()}.csv`;
+  a.click();
+}
+
+// ── HCO AUDITS ───────────────────────────────────────────────────────────────
+// Cols: 0=Audit Date,1=DOS,2=PID,3=Insurance,4=Proc,5=Doctor,6=HCO Comment,7=Onshore Comment,8=Initials,9=Clinic,10=Category,11=Reason
+function renderHCO(page=0){
+  _pages.hco = page;
+  const all = filterByClinics(getRows('hco'), 9);
+  const clinic = document.getElementById('hco-f-clinic').value;
+  const cat = document.getElementById('hco-f-cat').value || _filters.hco || '';
+  const status = document.getElementById('hco-f-status').value;
+  const search = document.getElementById('hco-search').value.trim().toLowerCase();
+
+  let rows = all.filter(r=>{
+    if(clinic && r[9]!==clinic) return false;
+    if(cat && r[10]!==cat) return false;
+    if(search && !String(r[2]||'').toLowerCase().includes(search)) return false;
+    if(status==='open' && !isPending(r[7])) return false;
+    if(status==='resolved' && isPending(r[7])) return false;
+    if(status==='overdue' && (!isPending(r[7]) || daysBetween(r[1])<OVERDUE_DAYS)) return false;
+    return true;
+  });
+
+  // KPIs
+  const totalAll = all.length;
+  const open = all.filter(r=>isPending(r[7])).length;
+  const resolved = totalAll - open;
+  const overdue = all.filter(r=>isPending(r[7])&&daysBetween(r[1])>=OVERDUE_DAYS).length;
+  document.getElementById('hco-kpi-total').textContent = totalAll.toLocaleString();
+  document.getElementById('hco-kpi-open').textContent = open.toLocaleString();
+  document.getElementById('hco-kpi-resolved').textContent = resolved.toLocaleString();
+  document.getElementById('hco-kpi-overdue').textContent = overdue.toLocaleString();
+
+  // Today grid (open items by category)
+  const openRows = all.filter(r=>isPending(r[7]));
+  const byCat = {};
+  openRows.forEach(r=>{
+    const c = r[10]||'Other';
+    if(!byCat[c]) byCat[c]={total:0,overdue:0};
+    byCat[c].total++;
+    if(daysBetween(r[1])>=OVERDUE_DAYS) byCat[c].overdue++;
+  });
+  const colors = CAT_COLORS;
+  let ci=0;
+  const todayGrid = document.getElementById('hco-today-grid');
+  todayGrid.innerHTML = Object.entries(byCat).sort((a,b)=>b[1].total-a[1].total).slice(0,12).map(([cat,d])=>{
+    const col = colors[ci++ % colors.length];
+    return `<div class="today-card" onclick="filterHCOByCategory('${cat.replace(/'/g,"\\'")}')">
+      <div class="cathead"><span class="catdot" style="background:${col}"></span>${esc(cat)}</div>
+      <div class="row"><span>Open</span><b>${d.total}</b></div>
+      <div class="row od"><span>Overdue</span><b>${d.overdue}</b></div>
+    </div>`;
+  }).join('');
+
+  // Chart
+  const catLabels = Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).slice(0,10);
+  const catData = catLabels.map(c=>byCat[c].total);
+  makeChart('hco-pie', catLabels, catData);
+
+  // Clinic breakdown
+  if(myClinics.length > 1){
+    document.getElementById('hco-clinic-breakdown').style.display='block';
+    const tbody = document.getElementById('hco-breakdown-tbody');
+    const byCl = {};
+    all.forEach(r=>{ if(!byCl[r[9]]) byCl[r[9]]={total:0,open:0,resolved:0,overdue:0}; byCl[r[9]].total++; if(isPending(r[7])){ byCl[r[9]].open++; if(daysBetween(r[1])>=OVERDUE_DAYS) byCl[r[9]].overdue++; } else byCl[r[9]].resolved++; });
+    tbody.innerHTML = Object.entries(byCl).sort((a,b)=>b[1].open-a[1].open).map(([cl,d])=>`<tr><td><span class="clinic-chip">${cl}</span></td><td>${d.total}</td><td style="color:var(--red)">${d.open}</td><td style="color:var(--green)">${d.resolved}</td><td style="color:var(--red)">${d.overdue}</td></tr>`).join('');
+  }
+
+  // Populate filters
+  populateFilter('hco-f-clinic', all.map(r=>r[9]));
+  populateFilter('hco-f-cat', all.map(r=>r[10]));
+
+  // Table
+  const sliced = rows.slice(page*PAGE_SIZE, (page+1)*PAGE_SIZE);
+  const tbody = document.getElementById('hco-tbody');
+  tbody.innerHTML = sliced.map((r,i)=>`
+    <tr onclick="showHCODetail(${page*PAGE_SIZE+i})" style="cursor:pointer;">
+      <td>${esc(r[0])}</td><td>${esc(r[1])}</td>
+      <td><b>${esc(r[2])}</b></td>
+      <td><span class="clinic-chip">${esc(r[9])}</span></td>
+      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td>
+      <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[6])}</td>
+      <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td>
+      <td>${statusBadge(r[7],r[1])}</td>
+    </tr>`).join('');
+  document.getElementById('hco-empty').style.display = rows.length ? 'none':'block';
+  renderPager('hco', rows.length, page, 'renderHCO');
+
+  // Store filtered for modal
+  window._hcoFiltered = rows;
+}
+
+function filterHCOByCategory(cat){
+  _filters.hco = cat;
+  document.getElementById('hco-f-cat').value = cat;
+  renderHCO(0);
+}
+
+function showHCODetail(idx){
+  const r = (window._hcoFiltered||[])[idx];
+  if(!r) return;
+  const fields = ['Audit Date','Date of Appointment','Patient ID','Insurance','Procedure Code','Doctor Name','HCO Comment','Onshore Comment','Initials','Clinic','Category','Reason'];
+  document.getElementById('hco-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span>${esc(r[i])}</span></div>`).join('');
+  openModal('hco-modal');
+}
+
+['hco-f-clinic','hco-f-cat','hco-f-status'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{_filters.hco='';renderHCO(0);}));
+document.getElementById('hco-search').addEventListener('input',()=>renderHCO(0));
+document.getElementById('hco-clear').addEventListener('click',()=>{ ['hco-f-clinic','hco-f-cat','hco-f-status'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('hco-search').value=''; _filters.hco=''; renderHCO(0); });
+
+// ── PP AUDITS ─────────────────────────────────────────────────────────────────
+// Cols: 0=Audit Date,1=DOS,2=PID,3=Insurance,4=Comment Past,5=Procedure,6=Comment Future,7=Comments,8=Initials,9=Clinic,10=Category,11=Reason
+function renderPP(page=0){
+  _pages.pp = page;
+  const all = filterByClinics(getRows('pp'), 9);
+  const clinic = document.getElementById('pp-f-clinic').value;
+  const cat = document.getElementById('pp-f-cat').value;
+  const search = document.getElementById('pp-search').value.trim().toLowerCase();
+
+  let rows = all.filter(r=>{
+    if(clinic && r[9]!==clinic) return false;
+    if(cat && r[10]!==cat) return false;
+    if(search && !String(r[2]||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // KPIs
+  const t6 = all.filter(r=>String(r[10]||'').includes('Table 6')).length;
+  const t7 = all.filter(r=>String(r[10]||'').includes('Table 7')).length;
+  const t8 = all.filter(r=>String(r[10]||'').includes('Table 8')).length;
+  document.getElementById('pp-kpi-total').textContent = all.length.toLocaleString();
+  document.getElementById('pp-kpi-t6').textContent = t6.toLocaleString();
+  document.getElementById('pp-kpi-t7').textContent = t7.toLocaleString();
+  document.getElementById('pp-kpi-t8').textContent = t8.toLocaleString();
+
+  // Chart
+  const byCat = {};
+  all.forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
+  const catLabels = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,10);
+  makeChart('pp-pie', catLabels, catLabels.map(c=>byCat[c]));
+
+  // Clinic breakdown
+  if(myClinics.length > 1){
+    document.getElementById('pp-clinic-breakdown').style.display='block';
+    const byCl = {};
+    all.forEach(r=>{ if(!byCl[r[9]]) byCl[r[9]]={total:0,t6:0,t7:0,t8:0}; byCl[r[9]].total++; if(String(r[10]).includes('Table 6')) byCl[r[9]].t6++; if(String(r[10]).includes('Table 7')) byCl[r[9]].t7++; if(String(r[10]).includes('Table 8')) byCl[r[9]].t8++; });
+    document.getElementById('pp-breakdown-tbody').innerHTML = Object.entries(byCl).sort((a,b)=>b[1].total-a[1].total).map(([cl,d])=>`<tr><td><span class="clinic-chip">${cl}</span></td><td>${d.total}</td><td>${d.t6}</td><td>${d.t7}</td><td>${d.t8}</td></tr>`).join('');
+  }
+
+  populateFilter('pp-f-clinic', all.map(r=>r[9]));
+  populateFilter('pp-f-cat', all.map(r=>r[10]));
+
+  const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
+  document.getElementById('pp-tbody').innerHTML = sliced.map(r=>`
+    <tr style="cursor:pointer;">
+      <td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b>${esc(r[2])}</b></td>
+      <td><span class="clinic-chip">${esc(r[9])}</span></td>
+      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td>
+      <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7]||r[4])}</td>
+      <td>${esc(r[3])}</td>
+    </tr>`).join('');
+  document.getElementById('pp-empty').style.display = rows.length?'none':'block';
+  renderPager('pp', rows.length, page, 'renderPP');
+}
+
+['pp-f-clinic','pp-f-cat'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderPP(0)));
+document.getElementById('pp-search').addEventListener('input',()=>renderPP(0));
+document.getElementById('pp-clear').addEventListener('click',()=>{ ['pp-f-clinic','pp-f-cat'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('pp-search').value=''; renderPP(0); });
+
+// ── PTAR ──────────────────────────────────────────────────────────────────────
+// Cols: 0=Date,1=PID,2=PT Name,3=Clinic,4=Outstanding,5=Insurance,6=Last Contact,7=Offshore Comments,8=Onshore Comments,9=Initials,10=Category,11=Reason
+function renderPTAR(page=0){
+  _pages.ptar = page;
+  const all = filterByClinics(getRows('ptar'), 3);
+  const clinic = document.getElementById('ptar-f-clinic').value;
+  const cat = document.getElementById('ptar-f-cat').value;
+  const status = document.getElementById('ptar-f-status').value;
+  const search = document.getElementById('ptar-search').value.trim().toLowerCase();
+
+  let rows = all.filter(r=>{
+    if(clinic && r[3]!==clinic) return false;
+    if(cat && r[10]!==cat) return false;
+    if(search && !String(r[1]||'').toLowerCase().includes(search)) return false;
+    if(status==='open' && !isPending(r[8])) return false;
+    if(status==='resolved' && isPending(r[8])) return false;
+    return true;
+  });
+
+  const open = all.filter(r=>isPending(r[8])).length;
+  const totalAmt = all.reduce((s,r)=>s+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0),0);
+  document.getElementById('ptar-kpi-total').textContent = all.length.toLocaleString();
+  document.getElementById('ptar-kpi-amount').textContent = fmtMoney(totalAmt);
+  document.getElementById('ptar-kpi-open').textContent = open.toLocaleString();
+  document.getElementById('ptar-kpi-resolved').textContent = (all.length-open).toLocaleString();
+
+  const byCat = {};
+  all.filter(r=>isPending(r[8])).forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
+  const catL = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,10);
+  makeChart('ptar-pie', catL, catL.map(c=>byCat[c]));
+
+  populateFilter('ptar-f-clinic', all.map(r=>r[3]));
+  populateFilter('ptar-f-cat', all.map(r=>r[10]));
+
+  const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
+  document.getElementById('ptar-tbody').innerHTML = sliced.map(r=>`
+    <tr style="cursor:pointer;" onclick="showPTARDetail(this)">
+      <td>${esc(r[0])}</td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td>
+      <td><span class="clinic-chip">${esc(r[3])}</span></td>
+      <td style="font-weight:700;color:var(--red);">${esc(r[4])}</td>
+      <td>${esc(r[5])}</td>
+      <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td>
+      <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
+      <td>${isPending(r[8])?'<span class="badge open">Open</span>':'<span class="badge resolved">Resolved</span>'}</td>
+    </tr>`).join('');
+  document.getElementById('ptar-empty').style.display = rows.length?'none':'block';
+  renderPager('ptar', rows.length, page, 'renderPTAR');
+  window._ptarFiltered = rows;
+}
+
+function showPTARDetail(tr){
+  const idx = Array.from(tr.parentNode.children).indexOf(tr) + _pages.ptar*PAGE_SIZE;
+  const r = (window._ptarFiltered||[])[idx]; if(!r) return;
+  const fields=['Date','Patient ID','PT Name','Clinic','Outstanding','Insurance','Last Contact','Offshore Comments','Onshore Comments','Initials','Category','Reason'];
+  document.getElementById('ptar-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span>${esc(r[i])}</span></div>`).join('');
+  openModal('ptar-modal');
+}
+
+['ptar-f-clinic','ptar-f-cat','ptar-f-status'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderPTAR(0)));
+document.getElementById('ptar-search').addEventListener('input',()=>renderPTAR(0));
+document.getElementById('ptar-clear').addEventListener('click',()=>{ ['ptar-f-clinic','ptar-f-cat','ptar-f-status'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('ptar-search').value=''; renderPTAR(0); });
+
+// ── OCR ───────────────────────────────────────────────────────────────────────
+// Cols: 0=Date Sent,1=Claim ID,2=PID,3=Clinic,4=Insurance,5=Submitted,6=Paid,7=Offshore Comments,8=Onshore Comments,9=Initials,10=Category,11=Reason
+function renderOCR(page=0){
+  _pages.ocr = page;
+  const all = filterByClinics(getRows('ocr'), 3);
+  const clinic = document.getElementById('ocr-f-clinic').value;
+  const cat = document.getElementById('ocr-f-cat').value;
+  const search = document.getElementById('ocr-search').value.trim().toLowerCase();
+
+  let rows = all.filter(r=>{
+    if(clinic && r[3]!==clinic) return false;
+    if(cat && r[10]!==cat) return false;
+    if(search && !String(r[2]||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const denied = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
+  const pending = all.filter(r=>String(r[10]||'').toLowerCase().includes('pending')).length;
+  const open = all.filter(r=>isPending(r[8])).length;
+  document.getElementById('ocr-kpi-total').textContent = all.length.toLocaleString();
+  document.getElementById('ocr-kpi-denied').textContent = denied.toLocaleString();
+  document.getElementById('ocr-kpi-pending').textContent = pending.toLocaleString();
+  document.getElementById('ocr-kpi-open').textContent = open.toLocaleString();
+
+  const byCat = {};
+  all.forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
+  const catL = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,8);
+  makeChart('ocr-pie', catL, catL.map(c=>byCat[c]));
+
+  populateFilter('ocr-f-clinic', all.map(r=>r[3]));
+  populateFilter('ocr-f-cat', all.map(r=>r[10]));
+
+  const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
+  document.getElementById('ocr-tbody').innerHTML = sliced.map(r=>`
+    <tr>
+      <td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b>${esc(r[2])}</b></td>
+      <td><span class="clinic-chip">${esc(r[3])}</span></td>
+      <td>${esc(r[4])}</td>
+      <td>${esc(r[5])}</td><td>${esc(r[6])}</td>
+      <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
+      <td>${isPending(r[8])?'<span class="badge open">Open</span>':'<span class="badge resolved">Resolved</span>'}</td>
+    </tr>`).join('');
+  document.getElementById('ocr-empty').style.display = rows.length?'none':'block';
+  renderPager('ocr', rows.length, page, 'renderOCR');
+}
+
+['ocr-f-clinic','ocr-f-cat'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderOCR(0)));
+document.getElementById('ocr-search').addEventListener('input',()=>renderOCR(0));
+document.getElementById('ocr-clear').addEventListener('click',()=>{ ['ocr-f-clinic','ocr-f-cat'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('ocr-search').value=''; renderOCR(0); });
+
+// ── PRE-D ─────────────────────────────────────────────────────────────────────
+// Cols: 0=Date of Request,1=PID,2=Clinic,3=Insurance,4=Procedure,5=Provider,6=Pre-D Amount,7=Offshore Comments,8=Onshore Comments,9=Initials,10=Category,11=Reason
+function renderPred(page=0){
+  _pages.pred = page;
+  const all = filterByClinics(getRows('pred'), 2);
+  const clinic = document.getElementById('pred-f-clinic').value;
+  const cat = document.getElementById('pred-f-cat').value || _filters.pred || '';
+  const search = document.getElementById('pred-search').value.trim().toLowerCase();
+
+  let rows = all.filter(r=>{
+    if(clinic && r[2]!==clinic) return false;
+    if(cat && r[10]!==cat) return false;
+    if(search && !String(r[1]||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const approved = all.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
+  const denied = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
+  const pending = all.filter(r=>String(r[10]||'').toLowerCase().includes('pending')||String(r[10]||'').toLowerCase().includes('submitted')).length;
+  document.getElementById('pred-kpi-total').textContent = all.length.toLocaleString();
+  document.getElementById('pred-kpi-approved').textContent = approved.toLocaleString();
+  document.getElementById('pred-kpi-denied').textContent = denied.toLocaleString();
+  document.getElementById('pred-kpi-pending').textContent = pending.toLocaleString();
+
+  // Approval chart
+  makeChart('pred-approval-chart',
+    ['Approved','Denied','Pending','Submitted'],
+    [approved, denied, pending, all.filter(r=>String(r[10]||'').toLowerCase()==='pre-d submitted').length]
+  );
+
+  // Denial reasons (from category)
+  const byDenial = {};
+  all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).forEach(r=>{ const c=r[11]||'Other'; byDenial[c]=(byDenial[c]||0)+1; });
+  const dl = Object.keys(byDenial).sort((a,b)=>byDenial[b]-byDenial[a]).slice(0,8);
+  makeChart('pred-denial-chart', dl, dl.map(c=>byDenial[c]));
+
+  populateFilter('pred-f-clinic', all.map(r=>r[2]));
+  populateFilter('pred-f-cat', all.map(r=>r[10]));
+
+  const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
+  document.getElementById('pred-tbody').innerHTML = sliced.map((r,i)=>`
+    <tr style="cursor:pointer;" onclick="showPredDetail(${page*PAGE_SIZE+i})">
+      <td>${esc(r[0])}</td><td><b>${esc(r[1])}</b></td>
+      <td><span class="clinic-chip">${esc(r[2])}</span></td>
+      <td>${esc(r[3])}</td>
+      <td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td>
+      <td>${esc(r[5])}</td>
+      <td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td>
+      <td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
+      <td>${esc(r[10])}</td>
+    </tr>`).join('');
+  document.getElementById('pred-empty').style.display = rows.length?'none':'block';
+  renderPager('pred', rows.length, page, 'renderPred');
+  window._predFiltered = rows;
+}
+
+function showPredDetail(idx){
+  const r = (window._predFiltered||[])[idx]; if(!r) return;
+  const fields=['Date of Request','Patient ID','Clinic','Insurance','Procedure Code','Provider','Pre-D Amount','Offshore Comments','Onshore Comments','Initials','Category','Reason'];
+  document.getElementById('pred-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span>${esc(r[i])}</span></div>`).join('');
+  openModal('pred-modal');
+}
+
+['pred-f-clinic','pred-f-cat'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{_filters.pred='';renderPred(0);}));
+document.getElementById('pred-search').addEventListener('input',()=>renderPred(0));
+document.getElementById('pred-clear').addEventListener('click',()=>{ ['pred-f-clinic','pred-f-cat'].forEach(id=>{document.getElementById(id).value=''}); document.getElementById('pred-search').value=''; _filters.pred=''; renderPred(0); });
+
+// ── SUNBIT ────────────────────────────────────────────────────────────────────
+const SB_DATA = [{"practice":"EON - Academy Dental","patientName":"Thomas H.","appId":"APP-001","fundingDate":"08/01/2026","bankCredit":1200,"totalTx":1300,"merchantFee":65,"paidToMerchant":1235,"activity":"Purchase","postedAmt":1200,"postedBy":"ZB","comments":""},{"practice":"NWK - Nova Dental","patientName":"Maria G.","appId":"APP-002","fundingDate":"08/03/2026","bankCredit":850,"totalTx":920,"merchantFee":46,"paidToMerchant":874,"activity":"Purchase","postedAmt":850,"postedBy":"HK","comments":""},{"practice":"NEO - Nova Dental","patientName":"James W.","appId":"APP-003","fundingDate":"08/05/2026","bankCredit":2100,"totalTx":2250,"merchantFee":112,"paidToMerchant":2138,"activity":"Purchase","postedAmt":2100,"postedBy":"RB","comments":""},{"practice":"BLM - Nova Dental","patientName":"Linda K.","appId":"APP-004","fundingDate":"08/07/2026","bankCredit":650,"totalTx":700,"merchantFee":35,"paidToMerchant":665,"activity":"Purchase","postedAmt":650,"postedBy":"SA","comments":""},{"practice":"MAP - Maple Dental","patientName":"Robert P.","appId":"APP-005","fundingDate":"08/10/2026","bankCredit":1800,"totalTx":1950,"merchantFee":97,"paidToMerchant":1853,"activity":"Purchase","postedAmt":1800,"postedBy":"ZB","comments":""},{"practice":"BEL - Maple Dental","patientName":"Susan M.","appId":"APP-006","fundingDate":"08/12/2026","bankCredit":950,"totalTx":1020,"merchantFee":51,"paidToMerchant":969,"activity":"Purchase","postedAmt":950,"postedBy":"JN","comments":""},{"practice":"NHA - Nova Dental PA","patientName":"David L.","appId":"APP-007","fundingDate":"08/15/2026","bankCredit":3200,"totalTx":3450,"merchantFee":172,"paidToMerchant":3278,"activity":"Purchase","postedAmt":3200,"postedBy":"RP","comments":""},{"practice":"TLP - Tulip Dental","patientName":"Jennifer A.","appId":"APP-008","fundingDate":"08/18/2026","bankCredit":420,"totalTx":450,"merchantFee":22,"paidToMerchant":428,"activity":"Purchase","postedAmt":420,"postedBy":"ZB","comments":""},{"practice":"EON - Academy Dental","patientName":"Michael B.","appId":"APP-009","fundingDate":"08/20/2026","bankCredit":1650,"totalTx":1780,"merchantFee":89,"paidToMerchant":1691,"activity":"Canceled","postedAmt":0,"postedBy":"HK","comments":"Patient canceled"},{"practice":"NWK - Nova Dental","patientName":"Patricia C.","appId":"APP-010","fundingDate":"08/22/2026","bankCredit":2800,"totalTx":3000,"merchantFee":150,"paidToMerchant":2850,"activity":"Purchase","postedAmt":2800,"postedBy":"SA","comments":""}];
+
+function initSunbit(){
+  const liveRows = getRows('sunbit');
+  const data = liveRows.length ? liveRows : SB_DATA;
+  window._sbData = data;
+
+  // Practice filter
+  const practices = [...new Set(data.map(r=>Array.isArray(r)?r[0]:r.practice))].filter(Boolean).sort();
+  const psel = document.getElementById('sb-f-practice');
+  psel.innerHTML = '<option value="">All Practices</option>';
+  practices.forEach(p=>{ const o=document.createElement('option'); o.value=o.textContent=p; psel.appendChild(o); });
+
+  renderSunbit(0);
+}
+
+function renderSunbit(page=0){
+  _pages.sb = page;
+  const data = window._sbData || SB_DATA;
+  const pf = document.getElementById('sb-f-practice').value;
+  const af = document.getElementById('sb-f-activity').value;
+  const sf = document.getElementById('sb-search').value.trim().toLowerCase();
+
+  const getF = (r,f,i) => Array.isArray(r) ? r[i] : r[f];
+
+  const rows = data.filter(r=>{
+    const prac = getF(r,'practice',0);
+    const act = getF(r,'activity',8);
+    const pt = getF(r,'patientName',1);
+    if(pf && prac!==pf) return false;
+    if(af && act!==af) return false;
+    if(sf && !String(pt||'').toLowerCase().includes(sf)) return false;
+    return true;
+  });
+
+  // KPIs
+  const totalFunded = rows.filter(r=>getF(r,'activity',8)==='Purchase').reduce((s,r)=>s+parseFloat(getF(r,'bankCredit',3)||0),0);
+  const totalTx = rows.filter(r=>getF(r,'activity',8)==='Purchase').length;
+  const canceled = rows.filter(r=>getF(r,'activity',8)==='Canceled').length;
+  const avgTx = totalTx ? (totalFunded/totalTx) : 0;
+  document.getElementById('sb-kpi-row').innerHTML = `
+    <div class="kpi"><div class="label">Total Funded</div><div class="value">${fmtMoney(totalFunded)}</div></div>
+    <div class="kpi"><div class="label">Transactions</div><div class="value">${totalTx}</div></div>
+    <div class="kpi"><div class="label">Canceled</div><div class="value red">${canceled}</div></div>
+    <div class="kpi"><div class="label">Avg per Tx</div><div class="value">${fmtMoney(avgTx)}</div></div>
+  `;
+
+  // Charts
+  const byPrac = {};
+  data.filter(r=>getF(r,'activity',8)==='Purchase').forEach(r=>{ const p=getF(r,'practice',0)||'Other'; byPrac[p]=(byPrac[p]||0)+parseFloat(getF(r,'bankCredit',3)||0); });
+  const pLabels = Object.keys(byPrac).sort((a,b)=>byPrac[b]-byPrac[a]);
+  makeBarChart('sb-chart-practice', pLabels, pLabels.map(p=>Math.round(byPrac[p])));
+
+  const byMonth = {};
+  data.filter(r=>getF(r,'activity',8)==='Purchase').forEach(r=>{
+    const d = getF(r,'fundingDate',2)||'';
+    const m = d.substring(0,7);
+    if(m) byMonth[m]=(byMonth[m]||0)+parseFloat(getF(r,'bankCredit',3)||0);
+  });
+  const mLabels = Object.keys(byMonth).sort();
+  makeBarChart('sb-chart-trend', mLabels, mLabels.map(m=>Math.round(byMonth[m])));
+
+  // Table
+  const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
+  document.getElementById('sb-tbody').innerHTML = sliced.map(r=>`
+    <tr>
+      <td>${esc(getF(r,'practice',0))}</td>
+      <td>${esc(getF(r,'patientName',1))}</td>
+      <td>${esc(getF(r,'fundingDate',2))}</td>
+      <td style="text-align:right;">${fmtMoney(getF(r,'bankCredit',3))}</td>
+      <td style="text-align:right;">${fmtMoney(getF(r,'totalTx',4))}</td>
+      <td style="text-align:right;">${fmtMoney(getF(r,'merchantFee',5))}</td>
+      <td style="text-align:right;">${fmtMoney(getF(r,'paidToMerchant',6))}</td>
+      <td style="text-align:center;">${esc(getF(r,'activity',8))}</td>
+      <td style="text-align:right;">${fmtMoney(getF(r,'postedAmt',9))}</td>
+    </tr>`).join('');
+  document.getElementById('sb-empty').style.display = rows.length?'none':'block';
+  renderPager('sb', rows.length, page, 'renderSunbit');
+}
+
+['sb-f-practice','sb-f-activity'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderSunbit(0)));
+document.getElementById('sb-search').addEventListener('input',()=>renderSunbit(0));
+
+// ── LANDING ───────────────────────────────────────────────────────────────────
+function renderLanding(){
+  document.getElementById('land-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const grid = document.getElementById('clinic-grid');
+  grid.innerHTML = ALL_CLINICS.map(code=>{
+    const info = CLINIC_INFO[code]||{name:code,manager:''};
+    return `<div class="clinic-card" data-clinic="${code}">
+      <div class="ctop">
+        <div class="cavatar">${code.charAt(0)}</div>
+        <div><div class="cname">${info.name}</div><div class="csub">${code} · ${info.manager}</div></div>
+        <div class="cbadge">Active</div>
+      </div>
+      <div class="cstats">
+        <div class="cstat"><div class="clabel">Clinic</div><div class="cval">${code}</div></div>
+        <div class="cstat"><div class="clabel">Manager</div><div class="cval" style="font-size:11px;">${info.manager}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.clinic-card').forEach(card=>{
+    card.addEventListener('click',()=>openGateFor(card.getAttribute('data-clinic')));
+  });
+}
+
+function openGateFor(code){
+  selectedClinic = code;
+  const info = CLINIC_INFO[code]||{name:code,manager:''};
+  document.getElementById('gate-selclinic').style.display='flex';
+  document.getElementById('gate-avatar').textContent = code.charAt(0);
+  document.getElementById('gate-selname').textContent = info.name;
+  document.getElementById('gate-selsub').textContent = code + ' · ' + info.manager;
+  document.getElementById('gate-email').value='';
+  document.getElementById('gate-password').value='';
+  document.getElementById('gate-err').style.display='none';
+  document.getElementById('landing').style.display='none';
+  document.getElementById('gate').style.display='block';
+}
+
+document.getElementById('gate-back').addEventListener('click',()=>{
+  document.getElementById('gate').style.display='none';
+  document.getElementById('landing').style.display='block';
+});
+
+document.getElementById('gate-enter').addEventListener('click',()=>{
+  const email = document.getElementById('gate-email').value.trim().toLowerCase();
+  const pw = document.getElementById('gate-password').value;
+  const err = document.getElementById('gate-err');
+
+  // Check credentials
+  let clinics = null;
+  if(EMAIL_CLINICS[email]){
+    const expectedPw = PASSWORDS[email] || TEMP_PASSWORD;
+    if(pw === expectedPw || pw === TEMP_PASSWORD){
+      clinics = EMAIL_CLINICS[email];
+    }
+  }
+  // Also check email-based login with temp password
+  if(!clinics){
+    const emailClinics = EMAIL_CLINICS[email];
+    if(emailClinics && pw === TEMP_PASSWORD) clinics = emailClinics;
+  }
+  if(!clinics || (selectedClinic && !clinics.includes(selectedClinic))){
+    err.style.display='block'; return;
+  }
+  err.style.display='none';
+  enterWorkspace(email, clinics);
+});
+
+document.getElementById('btn-switch').addEventListener('click',()=>{
+  document.getElementById('appview').style.display='none';
+  document.getElementById('gate').style.display='none';
+  document.getElementById('gate-email').value='';
+  document.getElementById('gate-password').value='';
+  selectedClinic=null;
+  document.getElementById('landing').style.display='block';
+});
+
+// ── ENTER WORKSPACE ───────────────────────────────────────────────────────────
+async function enterWorkspace(email, clinics){
+  currentUser = email;
+  myClinics = clinics;
+  document.getElementById('gate').style.display='none';
+  document.getElementById('appview').style.display='block';
+  document.getElementById('user-title').textContent = email;
+  document.getElementById('user-clinics').textContent = clinics.join(' · ') + ' — you see data for these clinics only';
+
+  setBadge('loading');
+
+  // Fetch all data
+  await fetchAll();
+
+  // Render all scopes
+  renderHCO(0);
+  renderPP(0);
+  renderPTAR(0);
+  renderOCR(0);
+  renderPred(0);
+  initSunbit();
+}
+
+// ── SCOPE TABS ────────────────────────────────────────────────────────────────
+document.querySelectorAll('.scope-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.scope-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.scope-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('scope-'+btn.getAttribute('data-scope')).classList.add('active');
+  });
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderLanding();
+</script>
+</body>
+</html>
