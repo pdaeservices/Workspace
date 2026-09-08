@@ -532,7 +532,7 @@ async function fetchScope(scope){
 async function fetchAll(){
   setBadge('loading');
   try {
-    const scopes = ['hco','pp','ptar','ocr','pred'];
+    const scopes = ['hco','pp','ptar','ocr','pred','sunbit'];
     await Promise.all(scopes.map(s => fetchScope(s)));
     setBadge('ok');
   } catch(e) {
@@ -997,8 +997,8 @@ function initSunbit(){
   const data = liveRows.length ? liveRows : SB_DATA;
   window._sbData = data;
 
-  // Practice filter
-  const practices = [...new Set(data.map(r=>Array.isArray(r)?r[0]:r.practice))].filter(Boolean).sort();
+  // Practice filter — col 0
+  const practices = [...new Set(data.map(r=>String(r[0]||'').trim()))].filter(Boolean).sort();
   const psel = document.getElementById('sb-f-practice');
   psel.innerHTML = '<option value="">All Practices</option>';
   practices.forEach(p=>{ const o=document.createElement('option'); o.value=o.textContent=p; psel.appendChild(o); });
@@ -1008,28 +1008,38 @@ function initSunbit(){
 
 function renderSunbit(page=0){
   _pages.sb = page;
+  // Live cols: 0=Practice,1=BankCredit,2=DateCredited,3=PatientName,4=AppID,
+  //            5=FundingDate,6=TotalTx,7=MerchantFeeP,8=MerchantFeeD,
+  //            9=PaidToMerchant,10=Activity,11=PtId,12=PostedDate,
+  //            13=PostingAmt,14=PostedBy,15=Comments
   const data = window._sbData || SB_DATA;
   const pf = document.getElementById('sb-f-practice').value;
   const af = document.getElementById('sb-f-activity').value;
   const sf = document.getElementById('sb-search').value.trim().toLowerCase();
 
-  const getF = (r,f,i) => Array.isArray(r) ? r[i] : r[f];
+  const isLive = data.length && Array.isArray(data[0]);
+
+  function getCol(r, liveIdx, sampleKey) {
+    if(isLive) return r[liveIdx];
+    return r[sampleKey];
+  }
 
   const rows = data.filter(r=>{
-    const prac = getF(r,'practice',0);
-    const act = getF(r,'activity',8);
-    const pt = getF(r,'patientName',1);
-    if(pf && prac!==pf) return false;
+    const prac = getCol(r,0,'practice');
+    const act  = String(getCol(r,10,'activity')||'').trim();
+    const pt   = getCol(r,3,'patientName');
+    if(pf && String(prac||'').trim()!==pf) return false;
     if(af && act!==af) return false;
     if(sf && !String(pt||'').toLowerCase().includes(sf)) return false;
     return true;
   });
 
-  // KPIs
-  const totalFunded = rows.filter(r=>getF(r,'activity',8)==='Purchase').reduce((s,r)=>s+parseFloat(getF(r,'bankCredit',3)||0),0);
-  const totalTx = rows.filter(r=>getF(r,'activity',8)==='Purchase').length;
-  const canceled = rows.filter(r=>getF(r,'activity',8)==='Canceled').length;
+  const purchases = rows.filter(r=>String(getCol(r,10,'activity')||'').trim()==='Purchase');
+  const totalFunded = purchases.reduce((s,r)=>{ const v=parseFloat(String(getCol(r,1,'bankCredit')||'').replace(/[$,]/g,'')||0); return s+v; },0);
+  const totalTx = purchases.length;
+  const canceled = rows.filter(r=>String(getCol(r,10,'activity')||'').toLowerCase().includes('cancel')).length;
   const avgTx = totalTx ? (totalFunded/totalTx) : 0;
+
   document.getElementById('sb-kpi-row').innerHTML = `
     <div class="kpi"><div class="label">Total Funded</div><div class="value">${fmtMoney(totalFunded)}</div></div>
     <div class="kpi"><div class="label">Transactions</div><div class="value">${totalTx}</div></div>
@@ -1037,17 +1047,19 @@ function renderSunbit(page=0){
     <div class="kpi"><div class="label">Avg per Tx</div><div class="value">${fmtMoney(avgTx)}</div></div>
   `;
 
-  // Charts
+  // By practice chart
   const byPrac = {};
-  data.filter(r=>getF(r,'activity',8)==='Purchase').forEach(r=>{ const p=getF(r,'practice',0)||'Other'; byPrac[p]=(byPrac[p]||0)+parseFloat(getF(r,'bankCredit',3)||0); });
+  purchases.forEach(r=>{ const p=String(getCol(r,0,'practice')||'Other').trim(); const v=parseFloat(String(getCol(r,1,'bankCredit')||'').replace(/[$,]/g,'')||0); byPrac[p]=(byPrac[p]||0)+v; });
   const pLabels = Object.keys(byPrac).sort((a,b)=>byPrac[b]-byPrac[a]);
   makeBarChart('sb-chart-practice', pLabels, pLabels.map(p=>Math.round(byPrac[p])));
 
+  // By month chart
   const byMonth = {};
-  data.filter(r=>getF(r,'activity',8)==='Purchase').forEach(r=>{
-    const d = getF(r,'fundingDate',2)||'';
+  purchases.forEach(r=>{
+    const d = String(getCol(r,5,'fundingDate')||getCol(r,2,'dateCredit')||'');
     const m = d.substring(0,7);
-    if(m) byMonth[m]=(byMonth[m]||0)+parseFloat(getF(r,'bankCredit',3)||0);
+    const v = parseFloat(String(getCol(r,1,'bankCredit')||'').replace(/[$,]/g,'')||0);
+    if(m) byMonth[m]=(byMonth[m]||0)+v;
   });
   const mLabels = Object.keys(byMonth).sort();
   makeBarChart('sb-chart-trend', mLabels, mLabels.map(m=>Math.round(byMonth[m])));
@@ -1056,15 +1068,15 @@ function renderSunbit(page=0){
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
   document.getElementById('sb-tbody').innerHTML = sliced.map(r=>`
     <tr>
-      <td>${esc(getF(r,'practice',0))}</td>
-      <td>${esc(getF(r,'patientName',1))}</td>
-      <td>${esc(getF(r,'fundingDate',2))}</td>
-      <td style="text-align:right;">${fmtMoney(getF(r,'bankCredit',3))}</td>
-      <td style="text-align:right;">${fmtMoney(getF(r,'totalTx',4))}</td>
-      <td style="text-align:right;">${fmtMoney(getF(r,'merchantFee',5))}</td>
-      <td style="text-align:right;">${fmtMoney(getF(r,'paidToMerchant',6))}</td>
-      <td style="text-align:center;">${esc(getF(r,'activity',8))}</td>
-      <td style="text-align:right;">${fmtMoney(getF(r,'postedAmt',9))}</td>
+      <td>${esc(getCol(r,0,'practice'))}</td>
+      <td>${esc(getCol(r,3,'patientName'))}</td>
+      <td>${esc(getCol(r,5,'fundingDate')||getCol(r,2,'dateCredit'))}</td>
+      <td style="text-align:right;">${esc(getCol(r,1,'bankCredit'))}</td>
+      <td style="text-align:right;">${esc(getCol(r,6,'totalTx'))}</td>
+      <td style="text-align:right;">${esc(getCol(r,8,'merchantFee'))}</td>
+      <td style="text-align:right;">${esc(getCol(r,9,'paidToMerchant'))}</td>
+      <td style="text-align:center;">${esc(getCol(r,10,'activity'))}</td>
+      <td style="text-align:right;">${esc(getCol(r,13,'postedAmt'))}</td>
     </tr>`).join('');
   document.getElementById('sb-empty').style.display = rows.length?'none':'block';
   renderPager('sb', rows.length, page, 'renderSunbit');
