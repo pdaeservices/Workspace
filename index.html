@@ -863,13 +863,16 @@ function showHCODetail(idx){
   window._currentModalScope = 'hco';
   const fields = ['Audit Date','Date of Appointment','Patient ID','Insurance','Procedure Code','Doctor Name','HCO Comment','Onshore Comment','Initials','Clinic','Category','Reason'];
   document.getElementById('hco-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span style="max-width:200px;word-break:break-word;">${esc(r[i])}</span></div>`).join('');
-  // Show onshore section for manager/desk
+  // Show onshore section for manager/desk/admin
   const sec = document.getElementById('hco-onshore-section');
-  if(currentRole === 'manager' || currentRole === 'desk') {
-    sec.style.display = 'block';
-    document.getElementById('hco-onshore-comment').value = r[7] || '';
-    document.getElementById('hco-onshore-status').value = (r[7] && String(r[7]).trim()) ? 'resolved' : 'open';
-  } else { sec.style.display = 'none'; }
+  sec.style.display = 'block';
+  document.getElementById('hco-onshore-comment').value = r[7] || '';
+  document.getElementById('hco-onshore-status').value = (r[7] && String(r[7]).trim()) ? 'resolved' : 'open';
+  // Make editable only for manager and desk
+  const isEditable = (currentRole === 'manager' || currentRole === 'desk' || currentRole === 'admin');
+  document.getElementById('hco-onshore-comment').disabled = !isEditable;
+  document.getElementById('hco-onshore-status').disabled = !isEditable;
+  document.querySelector('#hco-onshore-section button').style.display = isEditable ? 'block' : 'none';
   openModal('hco-modal');
 }
 
@@ -989,8 +992,14 @@ function renderPTAR(page=0){
 function showPTARDetail(tr){
   const idx = Array.from(tr.parentNode.children).indexOf(tr) + _pages.ptar*PAGE_SIZE;
   const r = (window._ptarFiltered||[])[idx]; if(!r) return;
+  window._currentModalIdx = idx;
+  window._currentModalScope = 'ptar';
   const fields=['Date','Patient ID','PT Name','Clinic','Outstanding','Insurance','Last Contact','Offshore Comments','Onshore Comments','Initials','Category','Reason'];
-  document.getElementById('ptar-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span>${esc(r[i])}</span></div>`).join('');
+  document.getElementById('ptar-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span style="max-width:200px;word-break:break-word;">${esc(r[i])}</span></div>`).join('');
+  const sec = document.getElementById('ptar-onshore-section');
+  sec.style.display = 'block';
+  document.getElementById('ptar-onshore-comment').value = r[8] || '';
+  document.getElementById('ptar-onshore-status').value = (r[8] && String(r[8]).trim()) ? 'resolved' : 'open';
   openModal('ptar-modal');
 }
 
@@ -1106,8 +1115,14 @@ function renderPred(page=0){
 
 function showPredDetail(idx){
   const r = (window._predFiltered||[])[idx]; if(!r) return;
+  window._currentModalIdx = idx;
+  window._currentModalScope = 'pred';
   const fields=['Date of Request','Patient ID','Clinic','Insurance','Procedure Code','Provider','Pre-D Amount','Offshore Comments','Onshore Comments','Initials','Category','Reason'];
-  document.getElementById('pred-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span>${esc(r[i])}</span></div>`).join('');
+  document.getElementById('pred-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span style="max-width:200px;word-break:break-word;">${esc(r[i])}</span></div>`).join('');
+  const sec = document.getElementById('pred-onshore-section');
+  sec.style.display = 'block';
+  document.getElementById('pred-onshore-comment').value = r[8] || '';
+  document.getElementById('pred-onshore-status').value = (r[8] && String(r[8]).trim()) ? 'resolved' : 'open';
   openModal('pred-modal');
 }
 
@@ -1394,7 +1409,18 @@ function saveOnshoreUpdate(scope) {
 function renderLanding(){
   document.getElementById('land-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const grid = document.getElementById('clinic-grid');
-  grid.innerHTML = ALL_CLINICS.map(code=>{
+  // Add "All Clinics" card at the top for admin
+  const allCard = `<div class="clinic-card" data-clinic="ALL" style="border-color:var(--navy);background:linear-gradient(135deg,#EEF2F7,#E0F2FE);">
+    <div class="ctop">
+      <div class="cavatar" style="background:var(--grad);">🏥</div>
+      <div><div class="cname">All Clinics — Admin View</div><div class="csub">Full access across all 13 clinics</div></div>
+    </div>
+    <div class="cstats">
+      <div class="cstat"><div class="clabel">Clinics</div><div class="cval">13</div></div>
+      <div class="cstat"><div class="clabel">Access</div><div class="cval" style="font-size:11px;">Full Admin</div></div>
+    </div>
+  </div>`;
+  grid.innerHTML = allCard + ALL_CLINICS.map(code=>{
     const info = CLINIC_INFO[code]||{name:code,manager:''};
     return `<div class="clinic-card" data-clinic="${code}">
       <div class="ctop">
@@ -1414,12 +1440,12 @@ function renderLanding(){
 }
 
 function openGateFor(code){
-  selectedClinic = code;
-  const info = CLINIC_INFO[code]||{name:code,manager:''};
+  selectedClinic = code === 'ALL' ? null : code;
+  const info = code === 'ALL' ? {name:'All Clinics — Admin View', manager:'Full access'} : (CLINIC_INFO[code]||{name:code,manager:''});
   document.getElementById('gate-selclinic').style.display='flex';
-  document.getElementById('gate-avatar').textContent = code.charAt(0);
+  document.getElementById('gate-avatar').textContent = code === 'ALL' ? '🏥' : code.charAt(0);
   document.getElementById('gate-selname').textContent = info.name;
-  document.getElementById('gate-selsub').textContent = code + ' · ' + info.manager;
+  document.getElementById('gate-selsub').textContent = code === 'ALL' ? 'Admin credentials required' : (code + ' · ' + info.manager);
   document.getElementById('gate-email').value='';
   document.getElementById('gate-password').value='';
   document.getElementById('gate-err').style.display='none';
@@ -1483,14 +1509,19 @@ document.getElementById('btn-switch').addEventListener('click',()=>{
 // ── ENTER WORKSPACE ───────────────────────────────────────────────────────────
 async function enterWorkspace(email, clinics){
   currentUser = email;
-  myClinics = clinics;
+  // If a specific clinic was selected on landing page, filter to that clinic only
+  if(selectedClinic) {
+    myClinics = [selectedClinic]; // Always filter to selected clinic
+  } else {
+    myClinics = clinics; // No clinic selected = all clinics (admin all-clinics card)
+  }
   document.getElementById('gate').style.display='none';
   document.getElementById('appview').style.display='block';
 
   // Role-based title
   const roleLabels = { admin:'Admin — Full Access', manager:'Onshore Manager', desk:'Front Desk' };
   document.getElementById('user-title').textContent = roleLabels[currentRole] || email;
-  document.getElementById('user-clinics').textContent = clinics.join(' · ') + (currentRole==='admin' ? ' — full access' : ' — your clinic');
+  document.getElementById('user-clinics').textContent = myClinics.join(' · ') + (currentRole==='admin' && myClinics.length === ALL_CLINICS.length ? ' — full access' : ' — your clinic');
 
   // Apply role-based UI restrictions
   applyRoleUI();
