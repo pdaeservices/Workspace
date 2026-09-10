@@ -461,11 +461,15 @@ button.sw:hover{background:rgba(255,255,255,.25);}
     <div class="grid2" style="margin-bottom:16px;">
       <div class="card" style="margin:0;padding:16px;">
         <h3>💰 Amount by Practice</h3>
-        <canvas id="sb-chart-practice" height="180"></canvas>
+        <div style="position:relative;height:200px;width:100%;">
+          <canvas id="sb-chart-practice"></canvas>
+        </div>
       </div>
       <div class="card" style="margin:0;padding:16px;">
         <h3>📅 Monthly Funding Trend</h3>
-        <canvas id="sb-chart-trend" height="180"></canvas>
+        <div style="position:relative;height:200px;width:100%;">
+          <canvas id="sb-chart-trend"></canvas>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -730,8 +734,17 @@ function makeBarChart(id, labels, data){
   if(_charts[id]){ _charts[id].destroy(); }
   _charts[id] = new Chart(ctx, {
     type:'bar',
-    data:{labels,datasets:[{data,backgroundColor:CAT_COLORS[0],borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}}}}
+    data:{labels,datasets:[{data,backgroundColor:CAT_COLORS[0],borderRadius:4,borderSkipped:false}]},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:{duration:0},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'$'+Number(ctx.parsed.y||0).toLocaleString()}}},
+      scales:{
+        y:{beginAtZero:true,ticks:{font:{size:9},callback:v=>'$'+Number(v).toLocaleString()}},
+        x:{ticks:{font:{size:9},maxRotation:30}}
+      }
+    }
   });
 }
 
