@@ -490,10 +490,70 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 </div><!-- /appview -->
 
 <!-- Detail modals -->
-<div class="modal-bg" id="hco-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Record Detail</h3><button class="sec sm" onclick="closeModal('hco-modal')">Close</button></div><div id="hco-modal-body"></div></div></div>
-<div class="modal-bg" id="pp-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>PP Audit Detail</h3><button class="sec sm" onclick="closeModal('pp-modal')">Close</button></div><div id="pp-modal-body"></div></div></div>
-<div class="modal-bg" id="ptar-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Patient Account Detail</h3><button class="sec sm" onclick="closeModal('ptar-modal')">Close</button></div><div id="ptar-modal-body"></div></div></div>
-<div class="modal-bg" id="pred-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Pre-D / Pre-Auth Detail</h3><button class="sec sm" onclick="closeModal('pred-modal')">Close</button></div><div id="pred-modal-body"></div></div></div>
+<div class="modal-bg" id="hco-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Record Detail</h3><button class="sec sm" onclick="closeModal('hco-modal')">Close</button></div><div id="hco-modal-body"></div>
+<div id="hco-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
+  <div style="margin-bottom:10px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
+    <textarea id="hco-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
+  </div>
+  <div style="margin-bottom:12px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
+    <select id="hco-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
+      <option value="open">Open</option>
+      <option value="resolved">Resolved</option>
+    </select>
+  </div>
+  <button onclick="saveOnshoreUpdate('hco')" style="width:100%;">💾 Save Update</button>
+</div>
+</div></div>
+<div class="modal-bg" id="pp-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>PP Audit Detail</h3><button class="sec sm" onclick="closeModal('pp-modal')">Close</button></div><div id="pp-modal-body"></div>
+<div id="pp-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
+  <div style="margin-bottom:10px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
+    <textarea id="pp-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
+  </div>
+  <div style="margin-bottom:12px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
+    <select id="pp-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
+      <option value="open">Open</option>
+      <option value="resolved">Resolved</option>
+    </select>
+  </div>
+  <button onclick="saveOnshoreUpdate('pp')" style="width:100%;">💾 Save Update</button>
+</div>
+</div></div>
+<div class="modal-bg" id="ptar-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Patient Account Detail</h3><button class="sec sm" onclick="closeModal('ptar-modal')">Close</button></div><div id="ptar-modal-body"></div>
+<div id="ptar-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
+  <div style="margin-bottom:10px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
+    <textarea id="ptar-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
+  </div>
+  <div style="margin-bottom:12px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
+    <select id="ptar-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
+      <option value="open">Open</option>
+      <option value="resolved">Resolved</option>
+    </select>
+  </div>
+  <button onclick="saveOnshoreUpdate('ptar')" style="width:100%;">💾 Save Update</button>
+</div>
+</div></div>
+<div class="modal-bg" id="pred-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Pre-D / Pre-Auth Detail</h3><button class="sec sm" onclick="closeModal('pred-modal')">Close</button></div><div id="pred-modal-body"></div>
+<div id="pred-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
+  <div style="margin-bottom:10px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
+    <textarea id="pred-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
+  </div>
+  <div style="margin-bottom:12px;">
+    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
+    <select id="pred-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
+      <option value="open">Open</option>
+      <option value="resolved">Resolved</option>
+    </select>
+  </div>
+  <button onclick="saveOnshoreUpdate('pred')" style="width:100%;">💾 Save Update</button>
+</div>
+</div></div>
 
 <script>
 // ── CONFIG ───────────────────────────────────────────────────────────────────
@@ -799,8 +859,17 @@ function filterHCOByCategory(cat){
 function showHCODetail(idx){
   const r = (window._hcoFiltered||[])[idx];
   if(!r) return;
+  window._currentModalIdx = idx;
+  window._currentModalScope = 'hco';
   const fields = ['Audit Date','Date of Appointment','Patient ID','Insurance','Procedure Code','Doctor Name','HCO Comment','Onshore Comment','Initials','Clinic','Category','Reason'];
-  document.getElementById('hco-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span>${esc(r[i])}</span></div>`).join('');
+  document.getElementById('hco-modal-body').innerHTML = fields.map((f,i)=>`<div class="modal-row"><span class="lbl">${f}</span><span style="max-width:200px;word-break:break-word;">${esc(r[i])}</span></div>`).join('');
+  // Show onshore section for manager/desk
+  const sec = document.getElementById('hco-onshore-section');
+  if(currentRole === 'manager' || currentRole === 'desk') {
+    sec.style.display = 'block';
+    document.getElementById('hco-onshore-comment').value = r[7] || '';
+    document.getElementById('hco-onshore-status').value = (r[7] && String(r[7]).trim()) ? 'resolved' : 'open';
+  } else { sec.style.display = 'none'; }
   openModal('hco-modal');
 }
 
@@ -1276,6 +1345,50 @@ function toggleAck(key, idx) {
 
 document.getElementById('ack-scope-select').addEventListener('change', renderAck);
 document.getElementById('ack-date-select').addEventListener('change', renderAckList);
+
+
+// ── ONSHORE UPDATES ───────────────────────────────────────────
+// Store onshore updates in memory (session only for now)
+const _onshoreUpdates = {}; // key: scope|rowIdx → {comment, status}
+
+function saveOnshoreUpdate(scope) {
+  const comment = document.getElementById(scope + '-onshore-comment').value.trim();
+  const status  = document.getElementById(scope + '-onshore-status').value;
+  const idx     = window._currentModalIdx;
+
+  if(idx === undefined) return;
+
+  // Store update
+  const key = scope + '|' + idx;
+  _onshoreUpdates[key] = { comment, status };
+
+  // Update in-memory data so table refreshes
+  const rows = _live[scope] && _live[scope].rows;
+  if(rows && rows[idx]) {
+    // Onshore comment is col 7 or 8 depending on scope
+    const commentCol = (scope === 'ptar' || scope === 'ocr' || scope === 'pred') ? 8 : 7;
+    rows[idx][commentCol] = comment;
+  }
+
+  // Show success feedback
+  const btn = event.target;
+  btn.textContent = '✅ Saved!';
+  btn.style.background = 'var(--green)';
+  setTimeout(() => {
+    btn.textContent = '💾 Save Update';
+    btn.style.background = '';
+  }, 2000);
+
+  // Close modal and refresh table
+  setTimeout(() => {
+    closeModal(scope + '-modal');
+    if(scope === 'hco') renderHCO(_pages.hco || 0);
+    else if(scope === 'pp') renderPP(_pages.pp || 0);
+    else if(scope === 'ptar') renderPTAR(_pages.ptar || 0);
+    else if(scope === 'ocr') renderOCR(_pages.ocr || 0);
+    else if(scope === 'pred') renderPred(_pages.pred || 0);
+  }, 1500);
+}
 
 // ── LANDING ───────────────────────────────────────────────────────────────────
 function renderLanding(){
