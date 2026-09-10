@@ -189,7 +189,13 @@ button.sw:hover{background:rgba(255,255,255,.25);}
     <input type="password" id="gate-password" placeholder="Password">
     <div class="gate-err" id="gate-err">Incorrect credentials. Try again.</div>
     <button style="width:100%;" id="gate-enter">Enter workspace</button>
-    <div class="gate-note">Temporary password for all users: <b>Password1234</b></div>
+    <div class="gate-note">
+  <b>Credentials:</b><br>
+  Admin: <code>admin</code> / <code>pdae@2026</code><br>
+  Manager: <code>manager</code> / <code>hco@2026</code><br>
+  Front Desk: <code>desk</code> / <code>hco@2026</code><br>
+  <span style="color:var(--text3);">Temp password for all: <b>Password1234</b></span>
+</div>
   </div>
 </div>
 
@@ -496,6 +502,25 @@ const PAGE_SIZE = 25;
 const OVERDUE_DAYS = 3;
 
 const ALL_CLINICS = ['EON','NWK','NEO','BLM','FWC','FWJ','FWH','MAP','BEL','NHA','TLP','MHA','GVD'];
+
+// ── ROLES ──────────────────────────────────────────────────────
+// ROLE: admin    → all clinics, full analytics
+// ROLE: manager  → own clinic, KPIs + charts + tasks + ack + resolve
+// ROLE: desk     → own clinic, pending tasks only + ack + resolve
+const ROLES = {
+  // Admin
+  'admin':   { role:'admin',   clinics: ALL_CLINICS, password:'pdae@2026' },
+  'password':{ role:'admin',   clinics: ALL_CLINICS, password:'1234' },
+  'hco':     { role:'admin',   clinics: ALL_CLINICS, password:'hco@2026' },
+  'pdae':    { role:'admin',   clinics: ALL_CLINICS, password:'pdae@2026' },
+  // Manager (sees their clinic only — full view)
+  'manager': { role:'manager', clinics: null, password:'hco@2026' },
+  // Front Desk (sees their clinic only — tasks only)
+  'desk':    { role:'desk',    clinics: null, password:'hco@2026' },
+};
+
+let currentRole = 'admin'; // admin | manager | desk
+
 const CLINIC_INFO = {
   EON:{name:'EON - Academy Dental',manager:'Nyasia Lebron'},
   NWK:{name:'NWK - Nova Dental',manager:'Briannah Branch'},
@@ -1295,28 +1320,42 @@ document.getElementById('gate-back').addEventListener('click',()=>{
 });
 
 document.getElementById('gate-enter').addEventListener('click',()=>{
-  const email = document.getElementById('gate-email').value.trim().toLowerCase();
+  const username = document.getElementById('gate-email').value.trim().toLowerCase();
   const pw = document.getElementById('gate-password').value;
   const err = document.getElementById('gate-err');
 
-  // Check credentials
-  let clinics = null;
-  if(EMAIL_CLINICS[email]){
-    const expectedPw = PASSWORDS[email] || TEMP_PASSWORD;
-    if(pw === expectedPw || pw === TEMP_PASSWORD){
-      clinics = EMAIL_CLINICS[email];
+  // Check against ROLES first
+  let roleInfo = ROLES[username];
+  if(roleInfo && (pw === roleInfo.password || pw === TEMP_PASSWORD)) {
+    // Determine clinics based on role
+    let clinics = roleInfo.clinics;
+    if(!clinics) {
+      // manager/desk gets the selected clinic only
+      clinics = selectedClinic ? [selectedClinic] : ALL_CLINICS;
     }
+    if(selectedClinic && !clinics.includes(selectedClinic)) {
+      err.style.display='block'; return;
+    }
+    err.style.display='none';
+    currentRole = roleInfo.role;
+    enterWorkspace(username, clinics);
+    return;
   }
-  // Also check email-based login with temp password
-  if(!clinics){
-    const emailClinics = EMAIL_CLINICS[email];
-    if(emailClinics && pw === TEMP_PASSWORD) clinics = emailClinics;
+
+  // Legacy email-based login
+  let clinics = null;
+  if(EMAIL_CLINICS[username]){
+    const expectedPw = PASSWORDS[username] || TEMP_PASSWORD;
+    if(pw === expectedPw || pw === TEMP_PASSWORD){
+      clinics = EMAIL_CLINICS[username];
+    }
   }
   if(!clinics || (selectedClinic && !clinics.includes(selectedClinic))){
     err.style.display='block'; return;
   }
   err.style.display='none';
-  enterWorkspace(email, clinics);
+  currentRole = 'admin';
+  enterWorkspace(username, clinics);
 });
 
 document.getElementById('btn-switch').addEventListener('click',()=>{
@@ -1334,8 +1373,14 @@ async function enterWorkspace(email, clinics){
   myClinics = clinics;
   document.getElementById('gate').style.display='none';
   document.getElementById('appview').style.display='block';
-  document.getElementById('user-title').textContent = email;
-  document.getElementById('user-clinics').textContent = clinics.join(' · ') + ' — you see data for these clinics only';
+
+  // Role-based title
+  const roleLabels = { admin:'Admin — Full Access', manager:'Onshore Manager', desk:'Front Desk' };
+  document.getElementById('user-title').textContent = roleLabels[currentRole] || email;
+  document.getElementById('user-clinics').textContent = clinics.join(' · ') + (currentRole==='admin' ? ' — full access' : ' — your clinic');
+
+  // Apply role-based UI restrictions
+  applyRoleUI();
 
   setBadge('loading');
 
@@ -1349,6 +1394,60 @@ async function enterWorkspace(email, clinics){
   renderOCR(0);
   renderPred(0);
   initSunbit();
+}
+
+function applyRoleUI() {
+  // For desk role — hide charts, KPIs, clinic breakdown, show only task tables
+  const hideForDesk = [
+    'hco-kpi-total','hco-kpi-open','hco-kpi-resolved','hco-kpi-overdue',
+    'hco-today-grid','hco-pie','hco-clinic-breakdown',
+    'pp-kpi-total','pp-kpi-t6','pp-kpi-t7','pp-kpi-t8','pp-pie','pp-clinic-breakdown',
+    'ptar-kpi-total','ptar-kpi-amount','ptar-kpi-open','ptar-kpi-resolved','ptar-pie',
+    'ocr-kpi-total','ocr-kpi-denied','ocr-kpi-pending','ocr-kpi-open','ocr-pie',
+    'pred-kpi-total','pred-kpi-approved','pred-kpi-denied','pred-kpi-pending',
+    'pred-approval-chart','pred-denial-chart',
+    'sb-chart-practice','sb-chart-trend'
+  ];
+
+  if(currentRole === 'desk') {
+    // Hide KPIs and charts
+    hideForDesk.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.closest('.card, .kpi, .kpi-row') && (el.closest('.card') || el.closest('.kpi-row')) ? 
+        (el.closest('.kpi') || el).style.display = 'none' : null;
+    });
+    // Hide chart cards
+    document.querySelectorAll('.chart-wrap').forEach(el => {
+      el.closest('.card') && (el.closest('.card').style.display = 'none');
+    });
+    // Default filter to open only
+    setTimeout(()=>{
+      const statusFilters = ['hco-f-status','ptar-f-status','ocr-f-status'];
+      statusFilters.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) { el.value = 'open'; el.dispatchEvent(new Event('change')); }
+      });
+    }, 500);
+  }
+
+  // For manager — hide clinic breakdown if single clinic
+  if(currentRole === 'manager' && myClinics.length === 1) {
+    ['hco-clinic-breakdown','pp-clinic-breakdown'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = 'none';
+    });
+  }
+
+  // Show resolve button in tables for manager and desk
+  if(currentRole === 'manager' || currentRole === 'desk') {
+    // Add resolve capability note
+    const bar = document.querySelector('.app-bar .actions');
+    if(bar) {
+      const note = document.createElement('div');
+      note.innerHTML = '<span style="font-size:11px;color:rgba(255,255,255,0.8);padding:4px 8px;background:rgba(255,255,255,0.15);border-radius:6px;">Click any row to view & resolve</span>';
+      bar.prepend(note);
+    }
+  }
 }
 
 // ── SCOPE TABS ────────────────────────────────────────────────────────────────
