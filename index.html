@@ -214,6 +214,7 @@ button.sw:hover{background:rgba(255,255,255,.25);}
     <button class="scope-tab" data-scope="ptar">💰 PTAR</button>
     <button class="scope-tab" data-scope="ocr">📄 OCR</button>
     <button class="scope-tab" data-scope="pred">✅ Pre-D/Pre-Auth</button>
+    <button class="scope-tab" data-scope="ack">📋 Daily Acknowledgment</button>
     <button class="scope-tab" data-scope="sunbit">💳 Sunbit</button>
   </div>
 
@@ -415,6 +416,36 @@ button.sw:hover{background:rgba(255,255,255,.25);}
       </div>
       <div class="empty" id="pred-empty" style="display:none;">No records match this filter.</div>
       <div class="pager" id="pred-pager"></div>
+    </div>
+  </div>
+
+  <!-- DAILY ACKNOWLEDGMENT -->
+  <div class="scope-panel" id="scope-ack">
+    <div class="card" style="max-width:440px;margin:0 auto;border-color:var(--teal);">
+      <h3 style="font-size:14px;">Daily Acknowledgment</h3>
+      <p class="sub" style="font-size:11.5px;">Pick a scope and date, review each item, then acknowledge.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);">Scope</label>
+          <select id="ack-scope-select" style="width:100%;margin-top:4px;">
+            <option value="hco">HCO Audits</option>
+            <option value="pp">PP Audits</option>
+            <option value="ptar">PTAR</option>
+            <option value="ocr">OCR</option>
+            <option value="pred">Pre-D/Pre-Auth</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);">Date</label>
+          <select id="ack-date-select" style="width:100%;margin-top:4px;"></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;font-size:12px;margin-bottom:10px;padding:8px 10px;background:#F8FAFC;border-radius:6px;">
+        <div><span style="color:var(--text2);">Pending</span> <b style="color:var(--red)" id="ack-total-pending">0</b></div>
+        <div><span style="color:var(--text2);">Acked</span> <b style="color:var(--green)" id="ack-total-acked">0</b></div>
+        <div><span style="color:var(--text2);">Total</span> <b id="ack-total-reports">0</b></div>
+      </div>
+      <div id="ack-pdf-list-unified" style="max-height:380px;overflow-y:auto;"></div>
     </div>
   </div>
 
@@ -1086,6 +1117,88 @@ function renderSunbit(page=0){
 ['sb-f-practice','sb-f-activity'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderSunbit(0)));
 document.getElementById('sb-search').addEventListener('input',()=>renderSunbit(0));
 
+
+// ── DAILY ACKNOWLEDGMENT ─────────────────────────────────────────
+const ACK_STORAGE = {};
+
+function renderAck() {
+  const scope = document.getElementById('ack-scope-select').value;
+  const rows = getRows(scope);
+
+  // Get unique dates from data
+  const dates = [...new Set(rows.map(r => {
+    const d = r[0] || r[1] || '';
+    return String(d).substring(0, 10);
+  }).filter(Boolean))].sort().reverse().slice(0, 30);
+
+  const dateSelect = document.getElementById('ack-date-select');
+  const prevDate = dateSelect.value;
+  dateSelect.innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join('');
+  if (prevDate && dates.includes(prevDate)) dateSelect.value = prevDate;
+
+  renderAckList();
+}
+
+function renderAckList() {
+  const scope = document.getElementById('ack-scope-select').value;
+  const date = document.getElementById('ack-date-select').value;
+  const rows = getRows(scope);
+
+  // Filter rows for selected date
+  const dayRows = rows.filter(r => {
+    const d = String(r[0] || r[1] || '').substring(0, 10);
+    return d === date;
+  });
+
+  const listEl = document.getElementById('ack-pdf-list-unified');
+  const key = scope + '|' + date;
+
+  let acked = ACK_STORAGE[key] || {};
+  let ackedCount = 0;
+
+  if (!dayRows.length) {
+    listEl.innerHTML = '<div class="empty">No records for this date.</div>';
+    document.getElementById('ack-total-pending').textContent = 0;
+    document.getElementById('ack-total-acked').textContent = 0;
+    document.getElementById('ack-total-reports').textContent = 0;
+    return;
+  }
+
+  listEl.innerHTML = dayRows.map((r, i) => {
+    const pid = r[2] || r[1] || '';
+    const clinic = r[9] || r[3] || r[2] || '';
+    const cat = r[10] || r[4] || '';
+    const comment = r[7] || r[6] || '';
+    const isAcked = !!acked[i];
+    if (isAcked) ackedCount++;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:${isAcked ? '#F8FAFC' : '#fff'};opacity:${isAcked ? '0.7' : '1'};">
+      <div style="width:30px;height:30px;border-radius:7px;background:${isAcked ? 'var(--greenbg)' : 'var(--redbg)'};color:${isAcked ? 'var(--green)' : 'var(--red)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${isAcked ? '✓' : '!'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12.5px;font-weight:600;">PID: ${esc(pid)} &nbsp;·&nbsp; <span class="clinic-chip">${esc(clinic)}</span></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cat)} ${comment ? '— ' + esc(comment) : ''}</div>
+      </div>
+      <button class="sm ${isAcked ? 'sec' : ''}" onclick="toggleAck('${key}',${i})">${isAcked ? 'Undo' : 'Ack'}</button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ack-total-pending').textContent = dayRows.length - ackedCount;
+  document.getElementById('ack-total-acked').textContent = ackedCount;
+  document.getElementById('ack-total-reports').textContent = dayRows.length;
+}
+
+function toggleAck(key, idx) {
+  if (!ACK_STORAGE[key]) ACK_STORAGE[key] = {};
+  if (ACK_STORAGE[key][idx]) {
+    delete ACK_STORAGE[key][idx];
+  } else {
+    ACK_STORAGE[key][idx] = true;
+  }
+  renderAckList();
+}
+
+document.getElementById('ack-scope-select').addEventListener('change', renderAck);
+document.getElementById('ack-date-select').addEventListener('change', renderAckList);
+
 // ── LANDING ───────────────────────────────────────────────────────────────────
 function renderLanding(){
   document.getElementById('land-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -1191,7 +1304,9 @@ document.querySelectorAll('.scope-tab').forEach(btn=>{
     document.querySelectorAll('.scope-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.scope-panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('scope-'+btn.getAttribute('data-scope')).classList.add('active');
+    const scope = btn.getAttribute('data-scope');
+    document.getElementById('scope-'+scope).classList.add('active');
+    if(scope === 'ack') renderAck();
   });
 });
 
