@@ -1139,20 +1139,25 @@ function renderAck() {
   renderAckList();
 }
 
+// Store current ack rows for modal
+let _ackRows = [];
+let _ackScope = '';
+
 function renderAckList() {
   const scope = document.getElementById('ack-scope-select').value;
   const date = document.getElementById('ack-date-select').value;
   const rows = getRows(scope);
+  _ackScope = scope;
 
   // Filter rows for selected date
   const dayRows = rows.filter(r => {
     const d = String(r[0] || r[1] || '').substring(0, 10);
     return d === date;
   });
+  _ackRows = dayRows;
 
   const listEl = document.getElementById('ack-pdf-list-unified');
   const key = scope + '|' + date;
-
   let acked = ACK_STORAGE[key] || {};
   let ackedCount = 0;
 
@@ -1170,20 +1175,68 @@ function renderAckList() {
     const cat = r[10] || r[4] || '';
     const comment = r[7] || r[6] || '';
     const isAcked = !!acked[i];
+    const isViewed = !!(ACK_STORAGE['viewed|' + key] && ACK_STORAGE['viewed|' + key][i]);
     if (isAcked) ackedCount++;
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:${isAcked ? '#F8FAFC' : '#fff'};opacity:${isAcked ? '0.7' : '1'};">
       <div style="width:30px;height:30px;border-radius:7px;background:${isAcked ? 'var(--greenbg)' : 'var(--redbg)'};color:${isAcked ? 'var(--green)' : 'var(--red)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${isAcked ? '✓' : '!'}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12.5px;font-weight:600;">PID: ${esc(pid)} &nbsp;·&nbsp; <span class="clinic-chip">${esc(clinic)}</span></div>
+        <div style="font-size:12.5px;font-weight:600;">
+          <span onclick="openAckDetail('${key}',${i})" style="cursor:pointer;color:var(--navy);text-decoration:underline;text-underline-offset:2px;">PID: ${esc(pid)}</span>
+          &nbsp;·&nbsp; <span class="clinic-chip">${esc(clinic)}</span>
+          ${isViewed ? '<span style="font-size:10px;color:var(--green);margin-left:6px;">👁 Viewed</span>' : '<span style="font-size:10px;color:var(--amber);margin-left:6px;">⚠ Click PID to view</span>'}
+        </div>
         <div style="font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cat)} ${comment ? '— ' + esc(comment) : ''}</div>
       </div>
-      <button class="sm ${isAcked ? 'sec' : ''}" onclick="toggleAck('${key}',${i})">${isAcked ? 'Undo' : 'Ack'}</button>
+      <button class="sm ${isAcked ? 'sec' : ''}" 
+        ${isViewed ? '' : 'disabled title="View record first by clicking PID"'}
+        style="${isViewed ? '' : 'opacity:0.4;cursor:not-allowed;'}"
+        onclick="${isViewed ? `toggleAck('${key}',${i})` : ''}">${isAcked ? 'Undo' : 'Ack'}</button>
     </div>`;
   }).join('');
 
   document.getElementById('ack-total-pending').textContent = dayRows.length - ackedCount;
   document.getElementById('ack-total-acked').textContent = ackedCount;
   document.getElementById('ack-total-reports').textContent = dayRows.length;
+}
+
+function openAckDetail(key, idx) {
+  const r = _ackRows[idx];
+  if (!r) return;
+
+  // Determine field labels based on scope
+  const scopeFields = {
+    hco:  ['Audit Date','DOS','Patient ID','Insurance','Procedure Code','Doctor Name','HCO Comment','Onshore Comment','Initials','Clinic','Category','Reason'],
+    pp:   ['Audit Date','DOS','Patient ID','Insurance','Comment Past','Procedure','Comment Future','Comments','Initials','Clinic','Category','Reason'],
+    ptar: ['Date','Patient ID','PT Name','Clinic','Outstanding','Insurance','Last Contact','Offshore Comments','Onshore Comments','Initials','Category','Reason'],
+    ocr:  ['Date Sent','Claim ID','Patient ID','Clinic','Insurance','Submitted','Paid','Offshore Comments','Onshore Comments','Initials','Category','Reason'],
+    pred: ['Date of Request','Patient ID','Clinic','Insurance','Procedure','Provider','Pre-D Amount','Offshore Comments','Onshore Comments','Initials','Category','Reason'],
+  };
+  const fields = scopeFields[_ackScope] || [];
+
+  // Build modal content
+  const body = document.getElementById('ack-detail-body');
+  body.innerHTML = fields.map((f, i) => `
+    <div class="modal-row">
+      <span class="lbl">${f}</span>
+      <span style="max-width:200px;word-break:break-word;">${esc(r[i] || '')}</span>
+    </div>`).join('');
+
+  // Mark as viewed
+  const vKey = 'viewed|' + key;
+  if (!ACK_STORAGE[vKey]) ACK_STORAGE[vKey] = {};
+  ACK_STORAGE[vKey][idx] = true;
+
+  // Store callback info for ack button in modal
+  document.getElementById('ack-modal-btn').onclick = function() {
+    toggleAck(key, idx);
+    closeModal('ack-detail-modal');
+  };
+  const isAcked = !!(ACK_STORAGE[key] && ACK_STORAGE[key][idx]);
+  document.getElementById('ack-modal-btn').textContent = isAcked ? 'Undo Acknowledgment' : '✓ Acknowledge';
+  document.getElementById('ack-modal-btn').className = isAcked ? 'sec' : '';
+
+  openModal('ack-detail-modal');
+  renderAckList(); // refresh to show viewed state
 }
 
 function toggleAck(key, idx) {
@@ -1313,5 +1366,19 @@ document.querySelectorAll('.scope-tab').forEach(btn=>{
 // ── INIT ──────────────────────────────────────────────────────────────────────
 renderLanding();
 </script>
+
+<!-- ACK Detail Modal -->
+<div class="modal-bg" id="ack-detail-modal">
+  <div class="modal-box" style="width:480px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="margin:0;">Record Detail</h3>
+      <button class="sec sm" onclick="closeModal('ack-detail-modal')">Close</button>
+    </div>
+    <div id="ack-detail-body"></div>
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
+      <button id="ack-modal-btn">✓ Acknowledge</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
