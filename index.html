@@ -698,10 +698,12 @@ function statusBadge(comment, dos){
   return '<span class="badge open">Open</span>';
 }
 
-function makeChart(id, labels, data, type='doughnut'){
+function makeChart(id, labels, data, type='doughnut', onClickFn){
   const ctx = document.getElementById(id);
   if(!ctx) return;
   if(_charts[id]){ _charts[id].destroy(); }
+  // Add pointer cursor if clickable
+  if(onClickFn) ctx.style.cursor = 'pointer';
   _charts[id] = new Chart(ctx, {
     type,
     data:{
@@ -710,7 +712,14 @@ function makeChart(id, labels, data, type='doughnut'){
     },
     options:{
       responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}
+      plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}},
+      onClick: onClickFn ? function(evt, elements){
+        if(elements && elements.length > 0){
+          const idx = elements[0].index;
+          const label = labels[idx];
+          onClickFn(label);
+        }
+      } : undefined
     }
   });
 }
@@ -815,7 +824,13 @@ function renderHCO(page=0){
   // Chart
   const catLabels = Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).slice(0,10);
   const catData = catLabels.map(c=>byCat[c].total);
-  makeChart('hco-pie', catLabels, catData);
+  makeChart('hco-pie', catLabels, catData, 'doughnut', function(label){
+    _filters.hco = label;
+    document.getElementById('hco-f-cat').value = label;
+    renderHCO(0);
+    // Scroll to table
+    document.getElementById('hco-tbody').scrollIntoView({behavior:'smooth'});
+  });
 
   // Clinic breakdown
   if(myClinics.length > 1){
@@ -909,7 +924,11 @@ function renderPP(page=0){
   const byCat = {};
   all.forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
   const catLabels = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,10);
-  makeChart('pp-pie', catLabels, catLabels.map(c=>byCat[c]));
+  makeChart('pp-pie', catLabels, catLabels.map(c=>byCat[c]), 'doughnut', function(label){
+    document.getElementById('pp-f-cat').value = label;
+    renderPP(0);
+    document.getElementById('pp-tbody').scrollIntoView({behavior:'smooth'});
+  });
 
   // Clinic breakdown
   if(myClinics.length > 1){
@@ -968,7 +987,11 @@ function renderPTAR(page=0){
   const byCat = {};
   all.filter(r=>isPending(r[8])).forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
   const catL = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,10);
-  makeChart('ptar-pie', catL, catL.map(c=>byCat[c]));
+  makeChart('ptar-pie', catL, catL.map(c=>byCat[c]), 'doughnut', function(label){
+    document.getElementById('ptar-f-cat').value = label;
+    renderPTAR(0);
+    document.getElementById('ptar-tbody').scrollIntoView({behavior:'smooth'});
+  });
 
   populateFilter('ptar-f-clinic', all.map(r=>r[3]));
   populateFilter('ptar-f-cat', all.map(r=>r[10]));
@@ -1034,7 +1057,11 @@ function renderOCR(page=0){
   const byCat = {};
   all.forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
   const catL = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,8);
-  makeChart('ocr-pie', catL, catL.map(c=>byCat[c]));
+  makeChart('ocr-pie', catL, catL.map(c=>byCat[c]), 'doughnut', function(label){
+    document.getElementById('ocr-f-cat').value = label;
+    renderOCR(0);
+    document.getElementById('ocr-tbody').scrollIntoView({behavior:'smooth'});
+  });
 
   populateFilter('ocr-f-clinic', all.map(r=>r[3]));
   populateFilter('ocr-f-cat', all.map(r=>r[10]));
@@ -1084,14 +1111,25 @@ function renderPred(page=0){
   // Approval chart
   makeChart('pred-approval-chart',
     ['Approved','Denied','Pending','Submitted'],
-    [approved, denied, pending, all.filter(r=>String(r[10]||'').toLowerCase()==='pre-d submitted').length]
+    [approved, denied, pending, all.filter(r=>String(r[10]||'').toLowerCase()==='pre-d submitted').length],
+    'doughnut', function(label){
+      document.getElementById('pred-f-cat').value = label.toLowerCase();
+      _filters.pred = label.toLowerCase();
+      renderPred(0);
+      document.getElementById('pred-tbody').scrollIntoView({behavior:'smooth'});
+    }
   );
 
   // Denial reasons (from category)
   const byDenial = {};
   all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).forEach(r=>{ const c=r[11]||'Other'; byDenial[c]=(byDenial[c]||0)+1; });
   const dl = Object.keys(byDenial).sort((a,b)=>byDenial[b]-byDenial[a]).slice(0,8);
-  makeChart('pred-denial-chart', dl, dl.map(c=>byDenial[c]));
+  makeChart('pred-denial-chart', dl, dl.map(c=>byDenial[c]), 'doughnut', function(label){
+    document.getElementById('pred-f-cat').value = label;
+    _filters.pred = label;
+    renderPred(0);
+    document.getElementById('pred-tbody').scrollIntoView({behavior:'smooth'});
+  });
 
   populateFilter('pred-f-clinic', all.map(r=>r[2]));
   populateFilter('pred-f-cat', all.map(r=>r[10]));
