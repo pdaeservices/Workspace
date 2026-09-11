@@ -493,71 +493,31 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 </div><!-- /wrap -->
 </div><!-- /appview -->
 
-<!-- Detail modals -->
-<div class="modal-bg" id="hco-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Record Detail</h3><button class="sec sm" onclick="closeModal('hco-modal')">Close</button></div><div id="hco-modal-body"></div>
-<div id="hco-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
-  <div style="margin-bottom:10px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
-    <textarea id="hco-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
+<!-- UNIFIED DETAIL MODAL -->
+<div class="modal-bg" id="unified-modal">
+  <div class="modal-box" style="width:500px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 id="unified-modal-title">Record Detail</h3>
+      <button class="sec sm" onclick="closeModal('unified-modal')">✕ Close</button>
+    </div>
+    <div id="unified-modal-body"></div>
+    <div style="margin-top:16px;padding-top:14px;border-top:2px solid var(--border);">
+      <div style="font-size:11px;font-weight:800;color:var(--navy);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;">Onshore Action</div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
+        <textarea id="unified-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
+        <select id="unified-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
+          <option value="open">🔴 Open</option>
+          <option value="resolved">🟢 Resolved</option>
+        </select>
+      </div>
+      <button id="unified-save-btn" style="width:100%;">💾 Save Update</button>
+    </div>
   </div>
-  <div style="margin-bottom:12px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
-    <select id="hco-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
-      <option value="open">Open</option>
-      <option value="resolved">Resolved</option>
-    </select>
-  </div>
-  <button onclick="saveOnshoreUpdate('hco')" style="width:100%;">💾 Save Update</button>
 </div>
-</div></div>
-<div class="modal-bg" id="pp-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>PP Audit Detail</h3><button class="sec sm" onclick="closeModal('pp-modal')">Close</button></div><div id="pp-modal-body"></div>
-<div id="pp-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
-  <div style="margin-bottom:10px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
-    <textarea id="pp-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
-  </div>
-  <div style="margin-bottom:12px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
-    <select id="pp-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
-      <option value="open">Open</option>
-      <option value="resolved">Resolved</option>
-    </select>
-  </div>
-  <button onclick="saveOnshoreUpdate('pp')" style="width:100%;">💾 Save Update</button>
-</div>
-</div></div>
-<div class="modal-bg" id="ptar-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Patient Account Detail</h3><button class="sec sm" onclick="closeModal('ptar-modal')">Close</button></div><div id="ptar-modal-body"></div>
-<div id="ptar-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
-  <div style="margin-bottom:10px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
-    <textarea id="ptar-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
-  </div>
-  <div style="margin-bottom:12px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
-    <select id="ptar-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
-      <option value="open">Open</option>
-      <option value="resolved">Resolved</option>
-    </select>
-  </div>
-  <button onclick="saveOnshoreUpdate('ptar')" style="width:100%;">💾 Save Update</button>
-</div>
-</div></div>
-<div class="modal-bg" id="pred-modal"><div class="modal-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3>Pre-D / Pre-Auth Detail</h3><button class="sec sm" onclick="closeModal('pred-modal')">Close</button></div><div id="pred-modal-body"></div>
-<div id="pred-onshore-section" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none;">
-  <div style="margin-bottom:10px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">ONSHORE COMMENTS</label>
-    <textarea id="pred-onshore-comment" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;resize:vertical;" placeholder="Add your comment here..."></textarea>
-  </div>
-  <div style="margin-bottom:12px;">
-    <label style="font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">STATUS</label>
-    <select id="pred-onshore-status" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
-      <option value="open">Open</option>
-      <option value="resolved">Resolved</option>
-    </select>
-  </div>
-  <button onclick="saveOnshoreUpdate('pred')" style="width:100%;">💾 Save Update</button>
-</div>
-</div></div>
 
 <script>
 // ── CONFIG ───────────────────────────────────────────────────────────────────
@@ -861,10 +821,11 @@ function renderHCO(page=0){
   // Table
   const sliced = rows.slice(page*PAGE_SIZE, (page+1)*PAGE_SIZE);
   const tbody = document.getElementById('hco-tbody');
+  window._hcoFiltered = rows;
   tbody.innerHTML = sliced.map((r,i)=>`
-    <tr onclick="showHCODetail(${page*PAGE_SIZE+i})" style="cursor:pointer;">
+    <tr>
       <td>${esc(r[0])}</td><td>${esc(r[1])}</td>
-      <td><b>${esc(r[2])}</b></td>
+      <td><b><span onclick="showUnifiedDetail('hco',${page*PAGE_SIZE+i},window._hcoFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[9])}</span></td>
       <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td>
       <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[6])}</td>
@@ -955,9 +916,11 @@ function renderPP(page=0){
   populateFilter('pp-f-cat', all.map(r=>r[10]));
 
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('pp-tbody').innerHTML = sliced.map(r=>`
-    <tr style="cursor:pointer;">
-      <td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b>${esc(r[2])}</b></td>
+  window._ppFiltered = rows;
+  document.getElementById('pp-tbody').innerHTML = sliced.map((r,i)=>`
+    <tr>
+      <td>${esc(r[0])}</td><td>${esc(r[1])}</td>
+      <td><b><span onclick="showUnifiedDetail('pp',${page*PAGE_SIZE+i},window._ppFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[9])}</span></td>
       <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td>
       <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7]||r[4])}</td>
@@ -1010,9 +973,12 @@ function renderPTAR(page=0){
   populateFilter('ptar-f-cat', all.map(r=>r[10]));
 
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('ptar-tbody').innerHTML = sliced.map(r=>`
-    <tr style="cursor:pointer;" onclick="showPTARDetail(this)">
-      <td>${esc(r[0])}</td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td>
+  window._ptarFiltered = rows;
+  document.getElementById('ptar-tbody').innerHTML = sliced.map((r,i)=>`
+    <tr>
+      <td>${esc(r[0])}</td>
+      <td><b><span onclick="showUnifiedDetail('ptar',${page*PAGE_SIZE+i},window._ptarFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td>
+      <td>${esc(r[2])}</td>
       <td><span class="clinic-chip">${esc(r[3])}</span></td>
       <td style="font-weight:700;color:var(--red);">${esc(r[4])}</td>
       <td>${esc(r[5])}</td>
@@ -1080,9 +1046,11 @@ function renderOCR(page=0){
   populateFilter('ocr-f-cat', all.map(r=>r[10]));
 
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('ocr-tbody').innerHTML = sliced.map(r=>`
+  window._ocrFiltered = rows;
+  document.getElementById('ocr-tbody').innerHTML = sliced.map((r,i)=>`
     <tr>
-      <td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b>${esc(r[2])}</b></td>
+      <td>${esc(r[0])}</td><td>${esc(r[1])}</td>
+      <td><b><span onclick="showUnifiedDetail('ocr',${page*PAGE_SIZE+i},window._ocrFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[3])}</span></td>
       <td>${esc(r[4])}</td>
       <td>${esc(r[5])}</td><td>${esc(r[6])}</td>
@@ -1148,9 +1116,11 @@ function renderPred(page=0){
   populateFilter('pred-f-cat', all.map(r=>r[10]));
 
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
+  window._predFiltered = rows;
   document.getElementById('pred-tbody').innerHTML = sliced.map((r,i)=>`
-    <tr style="cursor:pointer;" onclick="showPredDetail(${page*PAGE_SIZE+i})">
-      <td>${esc(r[0])}</td><td><b>${esc(r[1])}</b></td>
+    <tr>
+      <td>${esc(r[0])}</td>
+      <td><b><span onclick="showUnifiedDetail('pred',${page*PAGE_SIZE+i},window._predFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[2])}</span></td>
       <td>${esc(r[3])}</td>
       <td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td>
@@ -1454,6 +1424,79 @@ function saveOnshoreUpdate(scope) {
     else if(scope === 'ocr') renderOCR(_pages.ocr || 0);
     else if(scope === 'pred') renderPred(_pages.pred || 0);
   }, 1500);
+}
+
+
+// ── UNIFIED DETAIL MODAL ──────────────────────────────────────
+const SCOPE_FIELDS = {
+  hco:  ['Audit Date','DOS','Patient ID','Insurance','Procedure Code','Doctor Name','HCO Comment','Onshore Comment','Initials','Clinic','Category','Reason'],
+  pp:   ['Audit Date','DOS','Patient ID','Insurance','Comment Past','Procedure','Comment Future','Comments','Initials','Clinic','Category','Reason'],
+  ptar: ['Date','Patient ID','PT Name','Clinic','Outstanding','Insurance','Last Contact','Offshore Comments','Onshore Comments','Initials','Category','Reason'],
+  ocr:  ['Date Sent','Claim ID','Patient ID','Clinic','Insurance','Submitted','Paid','Offshore Comments','Onshore Comments','Initials','Category','Reason'],
+  pred: ['Date of Request','Patient ID','Clinic','Insurance','Procedure','Provider','Pre-D Amount','Offshore Comments','Onshore Comments','Initials','Category','Reason'],
+};
+const ONSHORE_COL = { hco:7, pp:7, ptar:8, ocr:8, pred:8 };
+const SCOPE_TITLES = { hco:'HCO Audit Detail', pp:'PP Audit Detail', ptar:'Patient Account (PTAR)', ocr:'OCR Claim Detail', pred:'Pre-D / Pre-Auth Detail' };
+
+let _currentUnifiedScope = '';
+let _currentUnifiedIdx = 0;
+let _currentUnifiedRows = [];
+
+function showUnifiedDetail(scope, idx, rows) {
+  _currentUnifiedScope = scope;
+  _currentUnifiedIdx = idx;
+  _currentUnifiedRows = rows;
+  const r = rows[idx];
+  if(!r) return;
+
+  document.getElementById('unified-modal-title').textContent = SCOPE_TITLES[scope] || 'Record Detail';
+  const fields = SCOPE_FIELDS[scope] || [];
+  document.getElementById('unified-modal-body').innerHTML = fields.map((f,i)=>`
+    <div class="modal-row">
+      <span class="lbl">${f}</span>
+      <span style="max-width:220px;word-break:break-word;text-align:right;">${esc(r[i]||'')}</span>
+    </div>`).join('');
+
+  // Pre-fill onshore comment and status
+  const commentCol = ONSHORE_COL[scope] || 7;
+  const existing = String(r[commentCol] || '').trim();
+  document.getElementById('unified-onshore-comment').value = existing;
+  document.getElementById('unified-onshore-status').value = existing ? 'resolved' : 'open';
+
+  // Save button
+  document.getElementById('unified-save-btn').onclick = function() {
+    saveUnifiedUpdate(scope, idx);
+  };
+
+  openModal('unified-modal');
+}
+
+function saveUnifiedUpdate(scope, idx) {
+  const comment = document.getElementById('unified-onshore-comment').value.trim();
+  const status  = document.getElementById('unified-onshore-status').value;
+  const commentCol = ONSHORE_COL[scope] || 7;
+
+  // Update in-memory data
+  if(_live[scope] && _live[scope].rows && _live[scope].rows[idx]) {
+    _live[scope].rows[idx][commentCol] = comment;
+  }
+
+  // Visual feedback
+  const btn = document.getElementById('unified-save-btn');
+  const prev = btn.textContent;
+  btn.textContent = '✅ Saved!';
+  btn.style.background = 'var(--green)';
+  setTimeout(() => {
+    btn.textContent = prev;
+    btn.style.background = '';
+    closeModal('unified-modal');
+    // Refresh table
+    if(scope==='hco') renderHCO(_pages.hco||0);
+    else if(scope==='pp') renderPP(_pages.pp||0);
+    else if(scope==='ptar') renderPTAR(_pages.ptar||0);
+    else if(scope==='ocr') renderOCR(_pages.ocr||0);
+    else if(scope==='pred') renderPred(_pages.pred||0);
+  }, 1200);
 }
 
 // ── LANDING ───────────────────────────────────────────────────────────────────
