@@ -317,7 +317,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <label>Search Patient:</label>
         <input type="text" id="hco-search" placeholder="e.g. 12345" style="width:110px;">
         <button class="sec sm" id="hco-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('hco')">⬇ Export CSV</button>
+        <button class="sm" onclick="exportCSV('hco')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr><th>Audit Date</th><th>DOS</th><th>Patient ID</th><th>Clinic</th><th>Category</th><th>HCO Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
@@ -360,7 +360,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <label>Search Patient:</label>
         <input type="text" id="pp-search" placeholder="e.g. 2378" style="width:110px;">
         <button class="sec sm" id="pp-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('pp')">⬇ Export CSV</button>
+        <button class="sm" onclick="exportCSV('pp')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr><th>Audit Date</th><th>DOS</th><th>Patient ID</th><th>Clinic</th><th>Category</th><th>Comment</th><th>Insurance</th></tr></thead>
@@ -412,7 +412,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <label>Search Patient:</label>
         <input type="text" id="ptar-search" placeholder="Patient ID" style="width:110px;">
         <button class="sec sm" id="ptar-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('ptar')">⬇ Export CSV</button>
+        <button class="sm" onclick="exportCSV('ptar')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr><th>Date</th><th>Patient ID</th><th>PT Name</th><th>Clinic</th><th>Outstanding</th><th>Insurance</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
@@ -461,7 +461,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <label>Search Patient:</label>
         <input type="text" id="ocr-search" placeholder="Patient ID" style="width:110px;">
         <button class="sec sm" id="ocr-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('ocr')">⬇ Export CSV</button>
+        <button class="sm" onclick="exportCSV('ocr')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr><th>Date Sent</th><th>Claim ID</th><th>Patient ID</th><th>Clinic</th><th>Insurance</th><th>Submitted</th><th>Paid</th><th>Onshore Comment</th><th>Status</th></tr></thead>
@@ -514,7 +514,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <label>Search Patient:</label>
         <input type="text" id="pred-search" placeholder="Patient ID" style="width:110px;">
         <button class="sec sm" id="pred-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('pred')">⬇ Export CSV</button>
+        <button class="sm" onclick="exportCSV('pred')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr><th>Date of Request</th><th>Patient ID</th><th>Clinic</th><th>Insurance</th><th>Procedure</th><th>Provider</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Category</th></tr></thead>
@@ -580,7 +580,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <label>Activity:</label>
         <select id="sb-f-activity"><option value="">All</option><option value="Purchase">Purchase</option><option value="Canceled">Canceled</option></select>
         <input type="text" id="sb-search" placeholder="Search patient…" style="width:130px;">
-        <button class="sm" onclick="exportCSV('sunbit')">⬇ Export CSV</button>
+        <button class="sm" onclick="exportCSV('sunbit')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr><th>Practice</th><th>Patient</th><th>Funding Date</th><th>Bank Credit</th><th>Total Tx</th><th>Merchant Fee</th><th>Paid to Merchant</th><th>Activity</th><th>Posted Amt</th></tr></thead>
@@ -913,14 +913,48 @@ function populateFilter(selectId, values){
 }
 
 function exportCSV(scope){
-  const rows = getRows(scope);
+  // Export only filtered/visible rows
+  const filteredMap = {
+    hco: window._hcoFiltered,
+    pp:  window._ppFiltered,
+    ptar:window._ptarFiltered,
+    ocr: window._ocrFiltered,
+    pred:window._predFiltered,
+    sunbit: window._sbData,
+  };
+  const rows = filteredMap[scope] || getRows(scope);
   if(!rows.length){ alert('No data to export.'); return; }
-  const hdrs = _live[scope].headers || [];
-  const csv = [hdrs.join(','), ...rows.map(r=>r.map(v=>JSON.stringify(v||'')).join(','))].join('\n');
+
+  // Get headers
+  const hdrs = (_live[scope] && _live[scope].headers) || [];
+
+  // Scope friendly names for filename
+  const names = { hco:'HCO_Audits', pp:'PP_Audits', ptar:'PTAR', ocr:'OCR', pred:'PreD_PreAuth', sunbit:'Sunbit' };
+  const date = new Date().toISOString().slice(0,10);
+  const filename = `${names[scope]||scope}_${date}.csv`;
+
+  // Build CSV
+  const csv = [
+    hdrs.join(','),
+    ...rows.map(r => r.map(v => {
+      const val = String(v === null || v === undefined ? '' : v);
+      // Wrap in quotes if contains comma, quote or newline
+      return val.includes(',') || val.includes('"') || val.includes('\n')
+        ? '"' + val.replace(/"/g, '""') + '"'
+        : val;
+    }).join(','))
+  ].join('\n');
+
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = `${scope}_export_${Date.now()}.csv`;
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = filename;
   a.click();
+
+  // Show feedback
+  const btn = event.target;
+  const prev = btn.textContent;
+  btn.textContent = '✅ Exported!';
+  setTimeout(()=>{ btn.textContent = prev; }, 2000);
 }
 
 // ── HCO AUDITS ───────────────────────────────────────────────────────────────
