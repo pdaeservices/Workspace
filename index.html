@@ -1949,13 +1949,14 @@ function renderTeamPerf() {
 
   const max = sorted[0][1];
   grid.innerHTML = sorted.map(([ini,count])=>`
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--shadow);">
+    <div onclick="showInitialDetail('${ini}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .15s,transform .15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(31,78,120,.14)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="width:36px;height:36px;border-radius:50%;background:var(--grad);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">${esc(ini)}</div>
       <div style="font-size:18px;font-weight:800;color:var(--navy);">${count}</div>
       <div style="font-size:10px;color:var(--text2);font-weight:600;">resolved</div>
       <div style="background:var(--border);border-radius:2px;height:4px;margin-top:8px;">
         <div style="background:var(--grad);height:4px;border-radius:2px;width:${Math.round(count/max*100)}%;"></div>
       </div>
+      <div style="font-size:9px;color:var(--teal);margin-top:6px;font-weight:700;">Click to view →</div>
     </div>`).join('');
 }
 
@@ -1986,6 +1987,80 @@ async function refreshData() {
     btn.textContent = '🔄 Refresh';
     btn.disabled = false;
   }, 2000);
+}
+
+
+// ── INITIAL DETAIL MODAL ──────────────────────────────────────
+function showInitialDetail(ini) {
+  const scopes = [
+    { key:'hco',  label:'HCO Audits',    commentCol:7, initialsCol:8,  clinicCol:9 },
+    { key:'ptar', label:'PTAR',           commentCol:8, initialsCol:9,  clinicCol:3 },
+    { key:'ocr',  label:'OCR',            commentCol:8, initialsCol:9,  clinicCol:3 },
+    { key:'pred', label:'Pre-D/Pre-Auth', commentCol:8, initialsCol:9,  clinicCol:2 },
+  ];
+
+  let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--grad);color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;">${esc(ini)}</div>
+    <div>
+      <div style="font-size:15px;font-weight:800;color:var(--navy);">Team Member: ${esc(ini)}</div>
+      <div style="font-size:11px;color:var(--text2);">Records resolved across all scopes</div>
+    </div>
+  </div>`;
+
+  let grandTotal = 0;
+
+  scopes.forEach(sc => {
+    const rows = getRows(sc.key);
+    const resolved = rows.filter(r => !isPending(r[sc.commentCol]) && String(r[sc.initialsCol]||'').trim().toUpperCase() === ini.toUpperCase());
+    const pending  = rows.filter(r => isPending(r[sc.commentCol]) && String(r[sc.initialsCol]||'').trim().toUpperCase() === ini.toUpperCase());
+    grandTotal += resolved.length;
+
+    // Get clinic breakdown
+    const byCl = {};
+    resolved.forEach(r => { const c = r[sc.clinicCol]||'Unknown'; byCl[c]=(byCl[c]||0)+1; });
+    const clBreakdown = Object.entries(byCl).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c,n])=>`<span class="clinic-chip">${c}: ${n}</span>`).join(' ');
+
+    html += `<div style="background:var(--gray);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${sc.label}</div>
+        <div style="display:flex;gap:8px;font-size:11px;font-weight:700;">
+          <span style="color:var(--green);">✅ ${resolved.length} resolved</span>
+          ${pending.length > 0 ? `<span style="color:var(--red);">🔴 ${pending.length} pending</span>` : ''}
+        </div>
+      </div>
+      ${clBreakdown ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${clBreakdown}</div>` : ''}
+      ${resolved.length > 0 ? `<button class="sm sec" onclick="jumpToScopeByInitials('${sc.key}','${ini}')" style="margin-top:8px;font-size:10.5px;">View in ${sc.label} →</button>` : ''}
+    </div>`;
+  });
+
+  // Grand total
+  html = `<div style="text-align:center;background:var(--grad);color:#fff;border-radius:10px;padding:10px;margin-bottom:14px;font-size:13px;font-weight:700;">
+    🏆 Total Resolved: ${grandTotal} records
+  </div>` + html;
+
+  // Show in unified modal
+  document.getElementById('unified-modal-title').textContent = `Performance — ${ini}`;
+  document.getElementById('unified-modal-body').innerHTML = html;
+  // Hide onshore action section for this modal
+  document.querySelector('#unified-modal > .modal-box > div:last-child').style.display = 'none';
+  openModal('unified-modal');
+}
+
+function jumpToScopeByInitials(scope, ini) {
+  closeModal('unified-modal');
+  // Show onshore section again for future use
+  document.querySelector('#unified-modal > .modal-box > div:last-child').style.display = 'block';
+
+  document.querySelectorAll('.scope-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.scope-panel').forEach(p=>p.classList.remove('active'));
+  const tab = document.querySelector(`.scope-tab[data-scope="${scope}"]`);
+  if(tab) tab.classList.add('active');
+  document.getElementById('scope-'+scope).classList.add('active');
+
+  // Apply initials search
+  const searchMap = { hco:'hco-search', ptar:'ptar-search', ocr:'ocr-search', pred:'pred-search' };
+  const el = document.getElementById(searchMap[scope]);
+  if(el){ el.value = ini; el.dispatchEvent(new Event('input')); }
 }
 
 // ── LANDING ───────────────────────────────────────────────────────────────────
