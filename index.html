@@ -229,6 +229,7 @@ button.sw:hover{background:rgba(255,255,255,.25);}
     </div>
     <div id="sync-badge"></div>
     <div id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,.65);padding:4px 8px;background:rgba(255,255,255,.1);border-radius:6px;"></div>
+    <button class="sw" id="btn-refresh" onclick="refreshData()">🔄 Refresh</button>
     <button class="sw" id="btn-switch">Switch user</button>
   </div>
 </div>
@@ -1956,6 +1957,35 @@ function renderTeamPerf() {
         <div style="background:var(--grad);height:4px;border-radius:2px;width:${Math.round(count/max*100)}%;"></div>
       </div>
     </div>`).join('');
+}
+
+
+// ── REFRESH DATA ──────────────────────────────────────────────
+async function refreshData() {
+  const btn = document.getElementById('btn-refresh');
+  btn.textContent = '⟳ Refreshing…';
+  btn.style.opacity = '0.6';
+  btn.disabled = true;
+
+  await fetchAll();
+
+  // Re-render current active scope
+  const activeScope = document.querySelector('.scope-tab.active');
+  const scope = activeScope ? activeScope.getAttribute('data-scope') : 'hco';
+  if(scope==='hco') renderHCO(0);
+  else if(scope==='pp') renderPP(0);
+  else if(scope==='ptar') renderPTAR(0);
+  else if(scope==='ocr') renderOCR(0);
+  else if(scope==='pred') renderPred(0);
+  else if(scope==='sunbit') initSunbit();
+  else if(scope==='summary') renderSummary();
+
+  btn.textContent = '✅ Refreshed!';
+  btn.style.opacity = '1';
+  setTimeout(()=>{
+    btn.textContent = '🔄 Refresh';
+    btn.disabled = false;
+  }, 2000);
 }
 
 // ── LANDING ───────────────────────────────────────────────────────────────────
