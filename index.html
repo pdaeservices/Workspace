@@ -141,6 +141,12 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 /* Empty */
 .empty{text-align:center;padding:32px;color:var(--text3);font-size:13px;}
 
+/* Date range filter */
+.date-range-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+.date-range-btn{padding:4px 12px;border-radius:16px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:var(--text2);font-family:inherit;transition:all .15s;}
+.date-range-btn:hover{border-color:var(--navy);color:var(--navy);}
+.date-range-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
 /* Row color coding */
 tr.row-resolved td{background:#F0FFF4 !important;color:#166534;}
 tr.row-resolved td .clinic-chip{background:#DCFCE7;color:#166534;}
@@ -300,6 +306,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
     <div class="card">
       <h3>Walkout Audit History</h3>
       <p class="sub">All records from HCO_Master_Input. Pending = Onshore Comment is blank.</p>
+      <div id="hco-date-bar"></div>
       <div class="filter-row">
         <label>Clinic:</label>
         <select id="hco-f-clinic"><option value="">All clinics</option></select>
@@ -344,6 +351,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
     <div class="card">
       <h3>Recent PP Audit activity</h3>
       <p class="sub">All records from HCO_Master_Input PP Audits tab.</p>
+      <div id="pp-date-bar"></div>
       <div class="filter-row">
         <label>Clinic:</label>
         <select id="pp-f-clinic"><option value="">All clinics</option></select>
@@ -393,6 +401,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
     <div class="card">
       <h3>PTAR collection reminders</h3>
       <p class="sub">All accounts — Onshore Comment blank = pending action.</p>
+      <div id="ptar-date-bar"></div>
       <div class="filter-row">
         <label>Clinic:</label>
         <select id="ptar-f-clinic"><option value="">All clinics</option></select>
@@ -443,6 +452,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
     <div class="card">
       <h3>All claims</h3>
       <p class="sub">All OCR records — Onshore Comment blank = pending action.</p>
+      <div id="ocr-date-bar"></div>
       <div class="filter-row">
         <label>Clinic:</label>
         <select id="ocr-f-clinic"><option value="">All clinics</option></select>
@@ -495,6 +505,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
     <div class="card">
       <h3>Recent requests</h3>
       <p class="sub">All Pre-D/Pre-Auth records from HCO_Master_Input.</p>
+      <div id="pred-date-bar"></div>
       <div class="filter-row">
         <label>Clinic:</label>
         <select id="pred-f-clinic"><option value="">All clinics</option></select>
@@ -931,7 +942,14 @@ function renderHCO(page=0){
     if(status==='overdue' && (!isPending(r[7]) || daysBetween(r[1])<OVERDUE_DAYS)) return false;
     return true;
   });
+  rows = filterByDateRange(rows, 0, _dateFilters['hco'] || 'all');
+  rows = filterByDateRange(rows, 0, _dateFilters['pp'] || 'all');
   rows = sortByDateDesc(rows, 0); // Sort by Audit Date desc
+  const ppBar = document.getElementById('pp-date-bar');
+  if(ppBar) ppBar.innerHTML = makeDateRangeBar('pp');
+  // Render date bar
+  const hcoBar = document.getElementById('hco-date-bar');
+  if(hcoBar) hcoBar.innerHTML = makeDateRangeBar('hco');
 
   // KPIs
   const totalAll = all.length;
@@ -1128,7 +1146,10 @@ function renderPTAR(page=0){
     if(status==='resolved' && isPending(r[8])) return false;
     return true;
   });
+  rows = filterByDateRange(rows, 0, _dateFilters['ptar'] || 'all');
   rows = sortByDateDesc(rows, 0); // Sort by Date desc
+  const ptarBar = document.getElementById('ptar-date-bar');
+  if(ptarBar) ptarBar.innerHTML = makeDateRangeBar('ptar');
 
   const open = all.filter(r=>isPending(r[8])).length;
   const totalAmt = all.reduce((s,r)=>s+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0),0);
@@ -1208,7 +1229,10 @@ function renderOCR(page=0){
     if(ocrStatus==='resolved' && isPending(r[8])) return false;
     return true;
   });
+  rows = filterByDateRange(rows, 0, _dateFilters['ocr'] || 'all');
   rows = sortByDateDesc(rows, 0); // Sort by Date Sent desc
+  const ocrBar = document.getElementById('ocr-date-bar');
+  if(ocrBar) ocrBar.innerHTML = makeDateRangeBar('ocr');
 
   const denied = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
   const pending = all.filter(r=>String(r[10]||'').toLowerCase().includes('pending')).length;
@@ -1272,7 +1296,10 @@ function renderPred(page=0){
     if(predStatus==='resolved' && isPending(r[8])) return false;
     return true;
   });
+  rows = filterByDateRange(rows, 0, _dateFilters['pred'] || 'all');
   rows = sortByDateDesc(rows, 0); // Sort by Date of Request desc
+  const predBar = document.getElementById('pred-date-bar');
+  if(predBar) predBar.innerHTML = makeDateRangeBar('pred');
 
   const approved = all.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
   const denied = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
@@ -1752,6 +1779,77 @@ function filterByStatus(scope, status) {
   // Scroll to table
   const tbody = document.getElementById(scope+'-tbody');
   if(tbody) tbody.scrollIntoView({behavior:'smooth'});
+}
+
+
+// ── DATE RANGE FILTER ─────────────────────────────────────────
+const _dateFilters = {}; // scope → { preset, from, to }
+
+function getDateRange(preset) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let from, to;
+  if(preset === 'today') {
+    from = to = today;
+  } else if(preset === 'week') {
+    const day = today.getDay();
+    from = new Date(today); from.setDate(today.getDate() - day);
+    to = new Date(from); to.setDate(from.getDate() + 6);
+  } else if(preset === 'month') {
+    from = new Date(today.getFullYear(), today.getMonth(), 1);
+    to = new Date(today.getFullYear(), today.getMonth()+1, 0);
+  } else if(preset === 'last30') {
+    from = new Date(today); from.setDate(today.getDate() - 30);
+    to = today;
+  } else if(preset === 'last7') {
+    from = new Date(today); from.setDate(today.getDate() - 7);
+    to = today;
+  } else {
+    return null; // All dates
+  }
+  return { from, to };
+}
+
+function filterByDateRange(rows, dateCol, preset) {
+  if(!preset || preset === 'all') return rows;
+  const range = getDateRange(preset);
+  if(!range) return rows;
+  return rows.filter(r => {
+    const d = new Date(r[dateCol]);
+    if(isNaN(d)) return false;
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return day >= range.from && day <= range.to;
+  });
+}
+
+function setDateFilter(scope, preset) {
+  _dateFilters[scope] = preset;
+  // Update button states
+  document.querySelectorAll(`.dr-btn-${scope}`).forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-preset') === preset);
+  });
+  // Re-render scope
+  if(scope==='hco') renderHCO(0);
+  else if(scope==='pp') renderPP(0);
+  else if(scope==='ptar') renderPTAR(0);
+  else if(scope==='ocr') renderOCR(0);
+  else if(scope==='pred') renderPred(0);
+}
+
+function makeDateRangeBar(scope) {
+  const presets = [
+    { label:'All', value:'all' },
+    { label:'Today', value:'today' },
+    { label:'Last 7 days', value:'last7' },
+    { label:'This week', value:'week' },
+    { label:'This month', value:'month' },
+    { label:'Last 30 days', value:'last30' },
+  ];
+  const current = _dateFilters[scope] || 'all';
+  return `<div class="date-range-row">
+    <span style="font-size:10.5px;font-weight:700;color:var(--text2);">DATE:</span>
+    ${presets.map(p=>`<button class="date-range-btn dr-btn-${scope}${p.value===current?' active':''}" data-preset="${p.value}" onclick="setDateFilter('${scope}','${p.value}')">${p.label}</button>`).join('')}
+  </div>`;
 }
 
 // ── DATE SORT HELPER ──────────────────────────────────────────
