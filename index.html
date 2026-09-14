@@ -141,6 +141,16 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 /* Empty */
 .empty{text-align:center;padding:32px;color:var(--text3);font-size:13px;}
 
+/* Row color coding */
+tr.row-resolved td{background:#F0FFF4 !important;color:#166534;}
+tr.row-resolved td .clinic-chip{background:#DCFCE7;color:#166534;}
+tr.row-overdue td{background:#FFF5F5 !important;}
+tr.row-overdue td{border-left:3px solid var(--red);}
+tr.row-pending td{background:#FFFBEB !important;}
+tr.row-resolved:hover td{background:#DCFCE7 !important;}
+tr.row-overdue:hover td{background:#FEE2E2 !important;}
+tr.row-pending:hover td{background:#FEF3C7 !important;}
+
 /* Modals */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
 .modal-box{background:#fff;border-radius:12px;padding:22px;width:440px;max-width:92vw;max-height:82vh;overflow-y:auto;}
@@ -983,8 +993,11 @@ function renderHCO(page=0){
   const sliced = rows.slice(page*PAGE_SIZE, (page+1)*PAGE_SIZE);
   const tbody = document.getElementById('hco-tbody');
   window._hcoFiltered = rows;
-  tbody.innerHTML = sliced.map((r,i)=>`
-    <tr>
+  tbody.innerHTML = sliced.map((r,i)=>{
+    const resolved = !isPending(r[7]);
+    const overdue  = isPending(r[7]) && daysBetween(r[1]) >= OVERDUE_DAYS;
+    const rowClass = resolved ? 'row-resolved' : overdue ? 'row-overdue' : 'row-pending';
+    return `<tr class="${rowClass}">
       <td>${esc(r[0])}</td><td>${esc(r[1])}</td>
       <td><b><span onclick="showUnifiedDetail('hco',${page*PAGE_SIZE+i},window._hcoFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[9])}</span></td>
@@ -992,7 +1005,8 @@ function renderHCO(page=0){
       <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[6])}</td>
       <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td>
       <td>${statusBadge(r[7],r[1])}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   document.getElementById('hco-empty').style.display = rows.length ? 'none':'block';
   renderPager('hco', rows.length, page, 'renderHCO');
 
@@ -1138,18 +1152,21 @@ function renderPTAR(page=0){
 
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
   window._ptarFiltered = rows;
-  document.getElementById('ptar-tbody').innerHTML = sliced.map((r,i)=>`
-    <tr>
+  document.getElementById('ptar-tbody').innerHTML = sliced.map((r,i)=>{
+    const resolved = !isPending(r[8]);
+    const rowClass = resolved ? 'row-resolved' : 'row-pending';
+    return `<tr class="${rowClass}">
       <td>${esc(r[0])}</td>
       <td><b><span onclick="showUnifiedDetail('ptar',${page*PAGE_SIZE+i},window._ptarFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td>
       <td>${esc(r[2])}</td>
       <td><span class="clinic-chip">${esc(r[3])}</span></td>
-      <td style="font-weight:700;color:var(--red);">${esc(r[4])}</td>
+      <td style="font-weight:700;color:${resolved?'var(--green)':'var(--red)'};">${esc(r[4])}</td>
       <td>${esc(r[5])}</td>
       <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td>
       <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
-      <td>${isPending(r[8])?'<span class="badge open">Open</span>':'<span class="badge resolved">Resolved</span>'}</td>
-    </tr>`).join('');
+      <td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td>
+    </tr>`;
+  }).join('');
   document.getElementById('ptar-empty').style.display = rows.length?'none':'block';
   renderPager('ptar', rows.length, page, 'renderPTAR');
   window._ptarFiltered = rows;
@@ -1216,16 +1233,19 @@ function renderOCR(page=0){
 
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
   window._ocrFiltered = rows;
-  document.getElementById('ocr-tbody').innerHTML = sliced.map((r,i)=>`
-    <tr>
+  document.getElementById('ocr-tbody').innerHTML = sliced.map((r,i)=>{
+    const resolved = !isPending(r[8]);
+    const rowClass = resolved ? 'row-resolved' : 'row-pending';
+    return `<tr class="${rowClass}">
       <td>${esc(r[0])}</td><td>${esc(r[1])}</td>
       <td><b><span onclick="showUnifiedDetail('ocr',${page*PAGE_SIZE+i},window._ocrFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[3])}</span></td>
       <td>${esc(r[4])}</td>
       <td>${esc(r[5])}</td><td>${esc(r[6])}</td>
       <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
-      <td>${isPending(r[8])?'<span class="badge open">Open</span>':'<span class="badge resolved">Resolved</span>'}</td>
-    </tr>`).join('');
+      <td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td>
+    </tr>`;
+  }).join('');
   document.getElementById('ocr-empty').style.display = rows.length?'none':'block';
   renderPager('ocr', rows.length, page, 'renderOCR');
 }
@@ -1291,8 +1311,10 @@ function renderPred(page=0){
 
   const sliced = rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
   window._predFiltered = rows;
-  document.getElementById('pred-tbody').innerHTML = sliced.map((r,i)=>`
-    <tr>
+  document.getElementById('pred-tbody').innerHTML = sliced.map((r,i)=>{
+    const resolved = !isPending(r[8]);
+    const rowClass = resolved ? 'row-resolved' : 'row-pending';
+    return `<tr class="${rowClass}">
       <td>${esc(r[0])}</td>
       <td><b><span onclick="showUnifiedDetail('pred',${page*PAGE_SIZE+i},window._predFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[2])}</span></td>
@@ -1302,7 +1324,8 @@ function renderPred(page=0){
       <td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td>
       <td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
       <td>${esc(r[10])}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   document.getElementById('pred-empty').style.display = rows.length?'none':'block';
   renderPager('pred', rows.length, page, 'renderPred');
   window._predFiltered = rows;
