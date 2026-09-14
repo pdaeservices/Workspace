@@ -762,6 +762,7 @@ function renderHCO(page=0){
     if(status==='overdue' && (!isPending(r[7]) || daysBetween(r[1])<OVERDUE_DAYS)) return false;
     return true;
   });
+  rows = sortByDateDesc(rows, 0); // Sort by Audit Date desc
 
   // KPIs
   const totalAll = all.length;
@@ -884,6 +885,7 @@ function renderPP(page=0){
     if(search && !String(r[2]||'').toLowerCase().includes(search)) return false;
     return true;
   });
+  rows = sortByDateDesc(rows, 0); // Sort by Audit Date desc
 
   // KPIs
   const t6 = all.filter(r=>String(r[10]||'').includes('Table 6')).length;
@@ -952,6 +954,7 @@ function renderPTAR(page=0){
     if(status==='resolved' && isPending(r[8])) return false;
     return true;
   });
+  rows = sortByDateDesc(rows, 0); // Sort by Date desc
 
   const open = all.filter(r=>isPending(r[8])).length;
   const totalAmt = all.reduce((s,r)=>s+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0),0);
@@ -1024,6 +1027,7 @@ function renderOCR(page=0){
     if(search && !String(r[2]||'').toLowerCase().includes(search)) return false;
     return true;
   });
+  rows = sortByDateDesc(rows, 0); // Sort by Date Sent desc
 
   const denied = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
   const pending = all.filter(r=>String(r[10]||'').toLowerCase().includes('pending')).length;
@@ -1080,6 +1084,7 @@ function renderPred(page=0){
     if(search && !String(r[1]||'').toLowerCase().includes(search)) return false;
     return true;
   });
+  rows = sortByDateDesc(rows, 0); // Sort by Date of Request desc
 
   const approved = all.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
   const denied = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
@@ -1497,6 +1502,19 @@ function saveUnifiedUpdate(scope, idx) {
     else if(scope==='ocr') renderOCR(_pages.ocr||0);
     else if(scope==='pred') renderPred(_pages.pred||0);
   }, 1200);
+}
+
+
+// ── DATE SORT HELPER ──────────────────────────────────────────
+function parseDate(val) {
+  if(!val) return 0;
+  const s = String(val).trim();
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+function sortByDateDesc(rows, col) {
+  return [...rows].sort((a,b) => parseDate(b[col]) - parseDate(a[col]));
 }
 
 // ── LANDING ───────────────────────────────────────────────────────────────────
