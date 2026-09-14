@@ -155,6 +155,19 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 /* Sync badge */
 #sync-badge span{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600;}
 
+/* Pending/Resolved Dashboard */
+.pr-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.pr-card{border-radius:12px;padding:16px 20px;cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid transparent;position:relative;overflow:hidden;}
+.pr-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1);}
+.pr-card.active{border-color:currentColor;}
+.pr-card.pending{background:linear-gradient(135deg,#FEF2F2,#FEE2E2);color:var(--red);}
+.pr-card.resolved{background:linear-gradient(135deg,#F0FFF4,#DCFCE7);color:var(--green);}
+.pr-card .pr-icon{font-size:22px;margin-bottom:6px;}
+.pr-card .pr-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.8;}
+.pr-card .pr-value{font-size:28px;font-weight:900;margin:4px 0;}
+.pr-card .pr-sub{font-size:10.5px;opacity:.75;font-weight:600;}
+.pr-card .pr-pct{position:absolute;top:12px;right:14px;font-size:11px;font-weight:700;opacity:.7;}
+
 @media(max-width:640px){.grid2{grid-template-columns:1fr;}.clinic-grid{padding:0 16px 40px;}.land-header{padding:20px 16px;}}
 </style>
 </head>
@@ -226,6 +239,22 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 
   <!-- HCO AUDITS -->
   <div class="scope-panel active" id="scope-hco">
+    <div class="pr-dashboard">
+      <div class="pr-card pending" id="hco-pr-pending" onclick="filterByStatus('hco','open')">
+        <div class="pr-icon">🔴</div>
+        <div class="pr-label">Pending</div>
+        <div class="pr-value" id="hco-pr-pending-val">—</div>
+        <div class="pr-sub">Click to view open items</div>
+        <div class="pr-pct" id="hco-pr-pending-pct"></div>
+      </div>
+      <div class="pr-card resolved" id="hco-pr-resolved" onclick="filterByStatus('hco','resolved')">
+        <div class="pr-icon">🟢</div>
+        <div class="pr-label">Resolved</div>
+        <div class="pr-value" id="hco-pr-resolved-val">—</div>
+        <div class="pr-sub">Click to view resolved items</div>
+        <div class="pr-pct" id="hco-pr-resolved-pct"></div>
+      </div>
+    </div>
     <div class="kpi-row">
       <div class="kpi"><div class="label">Total Records</div><div class="value" id="hco-kpi-total">—</div></div>
       <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="hco-kpi-open">—</div></div>
@@ -318,6 +347,22 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 
   <!-- PTAR -->
   <div class="scope-panel" id="scope-ptar">
+    <div class="pr-dashboard">
+      <div class="pr-card pending" id="ptar-pr-pending" onclick="filterByStatus('ptar','open')">
+        <div class="pr-icon">🔴</div>
+        <div class="pr-label">Pending</div>
+        <div class="pr-value" id="ptar-pr-pending-val">—</div>
+        <div class="pr-sub">Click to view open accounts</div>
+        <div class="pr-pct" id="ptar-pr-pending-pct"></div>
+      </div>
+      <div class="pr-card resolved" id="ptar-pr-resolved" onclick="filterByStatus('ptar','resolved')">
+        <div class="pr-icon">🟢</div>
+        <div class="pr-label">Resolved</div>
+        <div class="pr-value" id="ptar-pr-resolved-val">—</div>
+        <div class="pr-sub">Click to view resolved accounts</div>
+        <div class="pr-pct" id="ptar-pr-resolved-pct"></div>
+      </div>
+    </div>
     <div class="kpi-row">
       <div class="kpi"><div class="label">Total Accounts</div><div class="value" id="ptar-kpi-total">—</div></div>
       <div class="kpi"><div class="label">Outstanding ($)</div><div class="value red" id="ptar-kpi-amount">—</div></div>
@@ -355,6 +400,22 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 
   <!-- OCR -->
   <div class="scope-panel" id="scope-ocr">
+    <div class="pr-dashboard">
+      <div class="pr-card pending" id="ocr-pr-pending" onclick="filterByStatus('ocr','open')">
+        <div class="pr-icon">🔴</div>
+        <div class="pr-label">Pending</div>
+        <div class="pr-value" id="ocr-pr-pending-val">—</div>
+        <div class="pr-sub">Click to view open claims</div>
+        <div class="pr-pct" id="ocr-pr-pending-pct"></div>
+      </div>
+      <div class="pr-card resolved" id="ocr-pr-resolved" onclick="filterByStatus('ocr','resolved')">
+        <div class="pr-icon">🟢</div>
+        <div class="pr-label">Resolved</div>
+        <div class="pr-value" id="ocr-pr-resolved-val">—</div>
+        <div class="pr-sub">Click to view resolved claims</div>
+        <div class="pr-pct" id="ocr-pr-resolved-pct"></div>
+      </div>
+    </div>
     <div class="kpi-row">
       <div class="kpi"><div class="label">Total Claims</div><div class="value" id="ocr-kpi-total">—</div></div>
       <div class="kpi"><div class="label">Denied</div><div class="value red" id="ocr-kpi-denied">—</div></div>
@@ -389,6 +450,22 @@ button.sw:hover{background:rgba(255,255,255,.25);}
 
   <!-- PRE-D -->
   <div class="scope-panel" id="scope-pred">
+    <div class="pr-dashboard">
+      <div class="pr-card pending" id="pred-pr-pending" onclick="filterByStatus('pred','open')">
+        <div class="pr-icon">🔴</div>
+        <div class="pr-label">Pending</div>
+        <div class="pr-value" id="pred-pr-pending-val">—</div>
+        <div class="pr-sub">Click to view open requests</div>
+        <div class="pr-pct" id="pred-pr-pending-pct"></div>
+      </div>
+      <div class="pr-card resolved" id="pred-pr-resolved" onclick="filterByStatus('pred','resolved')">
+        <div class="pr-icon">🟢</div>
+        <div class="pr-label">Resolved</div>
+        <div class="pr-value" id="pred-pr-resolved-val">—</div>
+        <div class="pr-sub">Click to view resolved requests</div>
+        <div class="pr-pct" id="pred-pr-resolved-pct"></div>
+      </div>
+    </div>
     <div class="kpi-row">
       <div class="kpi"><div class="label">Total Requests</div><div class="value" id="pred-kpi-total">—</div></div>
       <div class="kpi"><div class="label">Approved</div><div class="value green" id="pred-kpi-approved">—</div></div>
@@ -773,6 +850,7 @@ function renderHCO(page=0){
   document.getElementById('hco-kpi-open').textContent = open.toLocaleString();
   document.getElementById('hco-kpi-resolved').textContent = resolved.toLocaleString();
   document.getElementById('hco-kpi-overdue').textContent = overdue.toLocaleString();
+  updatePRDashboard('hco', all, 7);
 
   // Today grid (open items by category)
   const openRows = all.filter(r=>isPending(r[7]));
@@ -962,6 +1040,7 @@ function renderPTAR(page=0){
   document.getElementById('ptar-kpi-amount').textContent = fmtMoney(totalAmt);
   document.getElementById('ptar-kpi-open').textContent = open.toLocaleString();
   document.getElementById('ptar-kpi-resolved').textContent = (all.length-open).toLocaleString();
+  updatePRDashboard('ptar', all, 8);
 
   const byCat = {};
   all.filter(r=>isPending(r[8])).forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
@@ -1021,10 +1100,13 @@ function renderOCR(page=0){
   const cat = document.getElementById('ocr-f-cat').value;
   const search = document.getElementById('ocr-search').value.trim().toLowerCase();
 
+  const ocrStatus = window._ocrStatusFilter || '';
   let rows = all.filter(r=>{
     if(clinic && r[3]!==clinic) return false;
     if(cat && r[10]!==cat) return false;
     if(search && !String(r[2]||'').toLowerCase().includes(search)) return false;
+    if(ocrStatus==='open' && !isPending(r[8])) return false;
+    if(ocrStatus==='resolved' && isPending(r[8])) return false;
     return true;
   });
   rows = sortByDateDesc(rows, 0); // Sort by Date Sent desc
@@ -1036,6 +1118,7 @@ function renderOCR(page=0){
   document.getElementById('ocr-kpi-denied').textContent = denied.toLocaleString();
   document.getElementById('ocr-kpi-pending').textContent = pending.toLocaleString();
   document.getElementById('ocr-kpi-open').textContent = open.toLocaleString();
+  updatePRDashboard('ocr', all, 8);
 
   const byCat = {};
   all.forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
@@ -1078,10 +1161,13 @@ function renderPred(page=0){
   const cat = document.getElementById('pred-f-cat').value || _filters.pred || '';
   const search = document.getElementById('pred-search').value.trim().toLowerCase();
 
+  const predStatus = window._predStatusFilter || '';
   let rows = all.filter(r=>{
     if(clinic && r[2]!==clinic) return false;
     if(cat && r[10]!==cat) return false;
     if(search && !String(r[1]||'').toLowerCase().includes(search)) return false;
+    if(predStatus==='open' && !isPending(r[8])) return false;
+    if(predStatus==='resolved' && isPending(r[8])) return false;
     return true;
   });
   rows = sortByDateDesc(rows, 0); // Sort by Date of Request desc
@@ -1093,6 +1179,7 @@ function renderPred(page=0){
   document.getElementById('pred-kpi-approved').textContent = approved.toLocaleString();
   document.getElementById('pred-kpi-denied').textContent = denied.toLocaleString();
   document.getElementById('pred-kpi-pending').textContent = pending.toLocaleString();
+  updatePRDashboard('pred', all, 8);
 
   // Approval chart
   makeChart('pred-approval-chart',
@@ -1504,6 +1591,63 @@ function saveUnifiedUpdate(scope, idx) {
   }, 1200);
 }
 
+
+
+// ── PENDING/RESOLVED DASHBOARD ────────────────────────────────
+function updatePRDashboard(scope, all, commentCol) {
+  const total = all.length;
+  const pending = all.filter(r => isPending(r[commentCol])).length;
+  const resolved = total - pending;
+  const pendPct = total ? Math.round(pending/total*100) : 0;
+  const resPct  = total ? Math.round(resolved/total*100) : 0;
+
+  const pv = document.getElementById(scope+'-pr-pending-val');
+  const rv = document.getElementById(scope+'-pr-resolved-val');
+  const pp = document.getElementById(scope+'-pr-pending-pct');
+  const rp = document.getElementById(scope+'-pr-resolved-pct');
+
+  if(pv) pv.textContent = pending.toLocaleString();
+  if(rv) rv.textContent = resolved.toLocaleString();
+  if(pp) pp.textContent = pendPct + '%';
+  if(rp) rp.textContent = resPct + '%';
+}
+
+function filterByStatus(scope, status) {
+  // Map scope to its status filter element
+  const filterMap = {
+    hco: 'hco-f-status',
+    ptar: 'ptar-f-status',
+    ocr: null, // OCR doesn't have status filter, add one
+    pred: null,
+  };
+
+  // Highlight active card
+  const pendCard = document.getElementById(scope+'-pr-pending');
+  const resCard  = document.getElementById(scope+'-pr-resolved');
+  if(pendCard) pendCard.classList.toggle('active', status==='open');
+  if(resCard)  resCard.classList.toggle('active', status==='resolved');
+
+  // Apply filter and re-render
+  if(scope === 'hco') {
+    document.getElementById('hco-f-status').value = status;
+    renderHCO(0);
+  } else if(scope === 'ptar') {
+    document.getElementById('ptar-f-status').value = status;
+    renderPTAR(0);
+  } else if(scope === 'ocr') {
+    // Store OCR status filter
+    window._ocrStatusFilter = status;
+    renderOCR(0);
+  } else if(scope === 'pred') {
+    // Store Pre-D status filter
+    window._predStatusFilter = status;
+    renderPred(0);
+  }
+
+  // Scroll to table
+  const tbody = document.getElementById(scope+'-tbody');
+  if(tbody) tbody.scrollIntoView({behavior:'smooth'});
+}
 
 // ── DATE SORT HELPER ──────────────────────────────────────────
 function parseDate(val) {
