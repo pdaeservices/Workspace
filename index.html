@@ -221,7 +221,14 @@ button.sw:hover{background:rgba(255,255,255,.25);}
     <div class="sub" id="user-clinics"></div>
   </div>
   <div class="actions">
+    <div style="position:relative;">
+      <input type="text" id="global-search" placeholder="🔍 Search patient ID across all scopes…" 
+        style="padding:7px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;font-size:12px;width:240px;font-family:inherit;"
+        oninput="globalSearch(this.value)">
+      <div id="global-results" style="display:none;position:absolute;top:36px;right:0;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);width:340px;max-height:300px;overflow-y:auto;z-index:500;"></div>
+    </div>
     <div id="sync-badge"></div>
+    <div id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,.65);padding:4px 8px;background:rgba(255,255,255,.1);border-radius:6px;"></div>
     <button class="sw" id="btn-switch">Switch user</button>
   </div>
 </div>
@@ -235,6 +242,7 @@ button.sw:hover{background:rgba(255,255,255,.25);}
     <button class="scope-tab" data-scope="pred">✅ Pre-D/Pre-Auth</button>
     <button class="scope-tab" data-scope="ack">📋 Daily Acknowledgment</button>
     <button class="scope-tab" data-scope="sunbit">💳 Sunbit</button>
+    <button class="scope-tab" data-scope="summary">📊 Backlog Summary</button>
   </div>
 
   <!-- HCO AUDITS -->
@@ -559,6 +567,46 @@ button.sw:hover{background:rgba(255,255,255,.25);}
       <div class="pager" id="sb-pager"></div>
     </div>
   </div>
+
+  <!-- BACKLOG SUMMARY -->
+  <div class="scope-panel" id="scope-summary">
+    <div class="card">
+      <h3>📊 Clinic Backlog Summary</h3>
+      <p class="sub">Pending items per clinic across all scopes — click any cell to jump to that scope filtered by clinic.</p>
+      <div class="tbl-wrap">
+        <table id="summary-table">
+          <thead>
+            <tr>
+              <th>Clinic</th>
+              <th style="color:var(--red);">HCO Pending</th>
+              <th style="color:var(--red);">PTAR Pending</th>
+              <th style="color:var(--red);">OCR Pending</th>
+              <th style="color:var(--red);">Pre-D Pending</th>
+              <th style="color:var(--navy);">Total Backlog</th>
+            </tr>
+          </thead>
+          <tbody id="summary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📅 PTAR Aging Buckets</h3>
+      <p class="sub">Outstanding balance by age — how long accounts have been open.</p>
+      <div class="kpi-row" id="ptar-aging-row"></div>
+      <div class="tbl-wrap" style="margin-top:12px;">
+        <table>
+          <thead><tr><th>Aging</th><th>Accounts</th><th>Outstanding ($)</th><th>% of Total</th></tr></thead>
+          <tbody id="ptar-aging-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>👥 Onshore Team Performance</h3>
+      <p class="sub">Records resolved per team member (by Initials).</p>
+      <div id="team-perf-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"></div>
+    </div>
+  </div>
+
 </div><!-- /wrap -->
 </div><!-- /appview -->
 
@@ -710,6 +758,10 @@ function setBadge(state){
     error:'<span style="background:#FEE2E2;color:#B91C1C;">✕ Sync error</span>'
   };
   el.innerHTML = map[state] || '';
+  if(state === 'ok'){
+    const ts = document.getElementById('last-sync-time');
+    if(ts) ts.textContent = 'Last loaded: ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  }
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -1689,6 +1741,223 @@ function sortByDateDesc(rows, col) {
   return [...rows].sort((a,b) => parseDate(b[col]) - parseDate(a[col]));
 }
 
+
+// ── GLOBAL SEARCH ─────────────────────────────────────────────
+function globalSearch(query) {
+  const q = query.trim().toLowerCase();
+  const resultsEl = document.getElementById('global-results');
+  if(!q || q.length < 3){ resultsEl.style.display='none'; return; }
+
+  const scopeConfig = [
+    { key:'hco',  pidCol:2, dateCol:0, clinicCol:9,  label:'HCO Audits' },
+    { key:'ptar', pidCol:1, dateCol:0, clinicCol:3,  label:'PTAR' },
+    { key:'ocr',  pidCol:2, dateCol:0, clinicCol:3,  label:'OCR' },
+    { key:'pred', pidCol:1, dateCol:0, clinicCol:2,  label:'Pre-D' },
+    { key:'pp',   pidCol:2, dateCol:0, clinicCol:9,  label:'PP Audits' },
+  ];
+
+  let results = [];
+  scopeConfig.forEach(sc => {
+    const rows = getRows(sc.key);
+    rows.filter(r => String(r[sc.pidCol]||'').toLowerCase().includes(q))
+      .slice(0,3)
+      .forEach(r => results.push({
+        scope: sc.key, label: sc.label,
+        pid: r[sc.pidCol], date: r[sc.dateCol], clinic: r[sc.clinicCol]
+      }));
+  });
+
+  if(!results.length){
+    resultsEl.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:12px;">No results found</div>';
+  } else {
+    resultsEl.innerHTML = results.map(r=>`
+      <div onclick="jumpToRecord('${r.scope}','${r.pid}')" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
+        onmouseover="this.style.background='var(--gray)'" onmouseout="this.style.background=''">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--navy);">PID: ${esc(String(r.pid))}</div>
+          <div style="font-size:10.5px;color:var(--text2);">${r.label} · ${esc(String(r.clinic))} · ${esc(String(r.date))}</div>
+        </div>
+        <span style="font-size:10px;background:var(--teal-light);color:var(--navy);padding:2px 7px;border-radius:10px;font-weight:700;">${r.label}</span>
+      </div>`).join('');
+  }
+  resultsEl.style.display = 'block';
+}
+
+function jumpToRecord(scope, pid) {
+  document.getElementById('global-results').style.display = 'none';
+  document.getElementById('global-search').value = '';
+  // Switch to scope tab
+  document.querySelectorAll('.scope-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.scope-panel').forEach(p=>p.classList.remove('active'));
+  const tab = document.querySelector(`.scope-tab[data-scope="${scope}"]`);
+  if(tab) tab.classList.add('active');
+  document.getElementById('scope-'+scope).classList.add('active');
+  // Apply search filter
+  const searchMap = { hco:'hco-search', pp:'pp-search', ptar:'ptar-search', ocr:'ocr-search', pred:'pred-search' };
+  const searchEl = document.getElementById(searchMap[scope]);
+  if(searchEl){ searchEl.value = String(pid); searchEl.dispatchEvent(new Event('input')); }
+}
+
+// Close global search on outside click
+document.addEventListener('click', e => {
+  if(!e.target.closest('#global-search') && !e.target.closest('#global-results')){
+    const el = document.getElementById('global-results');
+    if(el) el.style.display = 'none';
+  }
+});
+
+// ── BACKLOG SUMMARY ───────────────────────────────────────────
+function renderSummary() {
+  // Clinic backlog table
+  const clinics = myClinics.length > 1 ? myClinics : ALL_CLINICS;
+  const tbody = document.getElementById('summary-tbody');
+
+  const hcoRows  = getRows('hco');
+  const ptarRows = getRows('ptar');
+  const ocrRows  = getRows('ocr');
+  const predRows = getRows('pred');
+
+  let totalRow = { hco:0, ptar:0, ocr:0, pred:0 };
+
+  tbody.innerHTML = clinics.map(clinic => {
+    const hco  = hcoRows.filter(r=>r[9]===clinic && isPending(r[7])).length;
+    const ptar = ptarRows.filter(r=>r[3]===clinic && isPending(r[8])).length;
+    const ocr  = ocrRows.filter(r=>r[3]===clinic && isPending(r[8])).length;
+    const pred = predRows.filter(r=>r[2]===clinic && isPending(r[8])).length;
+    const total = hco + ptar + ocr + pred;
+    totalRow.hco+=hco; totalRow.ptar+=ptar; totalRow.ocr+=ocr; totalRow.pred+=pred;
+
+    const bar = total > 0 ? `<span style="display:inline-block;width:${Math.min(total/10,60)}px;height:4px;background:var(--red);border-radius:2px;margin-left:6px;vertical-align:middle;opacity:.6;"></span>` : '';
+
+    return `<tr>
+      <td><span class="clinic-chip">${clinic}</span></td>
+      <td><span onclick="jumpToClinicScope('hco','${clinic}')" style="cursor:pointer;color:${hco>0?'var(--red)':'var(--green)'};font-weight:700;">${hco}</span></td>
+      <td><span onclick="jumpToClinicScope('ptar','${clinic}')" style="cursor:pointer;color:${ptar>0?'var(--red)':'var(--green)'};font-weight:700;">${ptar}</span></td>
+      <td><span onclick="jumpToClinicScope('ocr','${clinic}')" style="cursor:pointer;color:${ocr>0?'var(--red)':'var(--green)'};font-weight:700;">${ocr}</span></td>
+      <td><span onclick="jumpToClinicScope('pred','${clinic}')" style="cursor:pointer;color:${pred>0?'var(--red)':'var(--green)'};font-weight:700;">${pred}</span></td>
+      <td style="font-weight:800;color:${total>0?'var(--navy)':'var(--green)'};">${total}${bar}</td>
+    </tr>`;
+  }).join('');
+
+  // Totals row
+  const grandTotal = totalRow.hco + totalRow.ptar + totalRow.ocr + totalRow.pred;
+  tbody.innerHTML += `<tr style="background:var(--gray);font-weight:800;border-top:2px solid var(--border);">
+    <td>TOTAL</td>
+    <td style="color:var(--red);">${totalRow.hco}</td>
+    <td style="color:var(--red);">${totalRow.ptar}</td>
+    <td style="color:var(--red);">${totalRow.ocr}</td>
+    <td style="color:var(--red);">${totalRow.pred}</td>
+    <td style="color:var(--navy);">${grandTotal}</td>
+  </tr>`;
+
+  // PTAR Aging
+  renderPtarAging(ptarRows);
+
+  // Team Performance
+  renderTeamPerf();
+}
+
+function jumpToClinicScope(scope, clinic) {
+  document.querySelectorAll('.scope-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.scope-panel').forEach(p=>p.classList.remove('active'));
+  const tab = document.querySelector(`.scope-tab[data-scope="${scope}"]`);
+  if(tab) tab.classList.add('active');
+  document.getElementById('scope-'+scope).classList.add('active');
+  // Apply clinic filter and open status
+  const clinicMap = { hco:'hco-f-clinic', ptar:'ptar-f-clinic', ocr:'ocr-f-clinic', pred:'pred-f-clinic' };
+  const statusMap = { hco:'hco-f-status', ptar:'ptar-f-status' };
+  const clinicEl = document.getElementById(clinicMap[scope]);
+  if(clinicEl){ clinicEl.value = clinic; clinicEl.dispatchEvent(new Event('change')); }
+  const statusEl = document.getElementById(statusMap[scope]);
+  if(statusEl){ statusEl.value = 'open'; statusEl.dispatchEvent(new Event('change')); }
+}
+
+// ── PTAR AGING ────────────────────────────────────────────────
+function renderPtarAging(rows) {
+  const buckets = [
+    { label:'0-30 days',  min:0,  max:30,  color:'#16A34A' },
+    { label:'31-60 days', min:31, max:60,  color:'#F59E0B' },
+    { label:'61-90 days', min:61, max:90,  color:'#F97316' },
+    { label:'90+ days',   min:91, max:9999,color:'#EF4444' },
+  ];
+
+  const today = new Date();
+  const aged = rows.map(r => {
+    const d = new Date(r[6] || r[0]); // Last Contact or Date
+    const days = isNaN(d) ? 0 : Math.round((today-d)/86400000);
+    const amt = parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0);
+    return { days, amt, pending: isPending(r[8]) };
+  }).filter(r => r.pending);
+
+  const total = aged.length || 1;
+  const totalAmt = aged.reduce((s,r)=>s+r.amt,0);
+
+  const kpiRow = document.getElementById('ptar-aging-row');
+  const agingBody = document.getElementById('ptar-aging-tbody');
+  if(!kpiRow || !agingBody) return;
+
+  kpiRow.innerHTML = buckets.map(b=>{
+    const count = aged.filter(r=>r.days>=b.min&&r.days<=b.max).length;
+    const amt = aged.filter(r=>r.days>=b.min&&r.days<=b.max).reduce((s,r)=>s+r.amt,0);
+    return `<div class="kpi" style="border-top:3px solid ${b.color};">
+      <div class="label">${b.label}</div>
+      <div class="value" style="color:${b.color};font-size:20px;">${count}</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:2px;">${fmtMoney(amt)}</div>
+    </div>`;
+  }).join('');
+
+  agingBody.innerHTML = buckets.map(b=>{
+    const count = aged.filter(r=>r.days>=b.min&&r.days<=b.max).length;
+    const amt = aged.filter(r=>r.days>=b.min&&r.days<=b.max).reduce((s,r)=>s+r.amt,0);
+    const pct = Math.round(count/total*100);
+    return `<tr>
+      <td><span style="color:${b.color};font-weight:700;">${b.label}</span></td>
+      <td style="font-weight:700;">${count}</td>
+      <td style="font-weight:700;">${fmtMoney(amt)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="background:${b.color};height:6px;border-radius:3px;width:${pct}px;max-width:80px;"></div>
+          <span style="font-size:11px;">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── TEAM PERFORMANCE ──────────────────────────────────────────
+function renderTeamPerf() {
+  const grid = document.getElementById('team-perf-grid');
+  if(!grid) return;
+
+  const scopes = ['hco','ptar','ocr','pred'];
+  const initials = {};
+
+  scopes.forEach(s => {
+    const commentCol = s==='hco' ? 7 : 8;
+    const initialsCol = s==='hco' ? 8 : 9;
+    getRows(s).forEach(r => {
+      if(!isPending(r[commentCol])) {
+        const ini = String(r[initialsCol]||'').trim().toUpperCase();
+        if(ini) initials[ini] = (initials[ini]||0) + 1;
+      }
+    });
+  });
+
+  const sorted = Object.entries(initials).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if(!sorted.length){ grid.innerHTML='<div style="color:var(--text3);font-size:12px;">No resolved records with initials found.</div>'; return; }
+
+  const max = sorted[0][1];
+  grid.innerHTML = sorted.map(([ini,count])=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--shadow);">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--grad);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">${esc(ini)}</div>
+      <div style="font-size:18px;font-weight:800;color:var(--navy);">${count}</div>
+      <div style="font-size:10px;color:var(--text2);font-weight:600;">resolved</div>
+      <div style="background:var(--border);border-radius:2px;height:4px;margin-top:8px;">
+        <div style="background:var(--grad);height:4px;border-radius:2px;width:${Math.round(count/max*100)}%;"></div>
+      </div>
+    </div>`).join('');
+}
+
 // ── LANDING ───────────────────────────────────────────────────────────────────
 function renderLanding(){
   document.getElementById('land-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -1887,6 +2156,7 @@ document.querySelectorAll('.scope-tab').forEach(btn=>{
     const scope = btn.getAttribute('data-scope');
     document.getElementById('scope-'+scope).classList.add('active');
     if(scope === 'ack') renderAck();
+    if(scope === 'summary') renderSummary();
   });
 });
 
