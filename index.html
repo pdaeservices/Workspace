@@ -183,6 +183,7 @@ button.sw:hover{background:rgba(255,255,255,.25);}
     </div>
     <div class="live-dot"><span></span> All clinics monitored</div>
   </div>
+  <div id="land-summary" style="display:flex;gap:10px;padding:0 32px;margin-bottom:16px;flex-wrap:wrap;"></div>
   <div class="section-label">Select your clinic to continue</div>
   <div class="clinic-grid" id="clinic-grid"></div>
 </div>
@@ -2067,31 +2068,66 @@ function jumpToScopeByInitials(scope, ini) {
 function renderLanding(){
   document.getElementById('land-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const grid = document.getElementById('clinic-grid');
-  // Add "All Clinics" card at the top for admin
-  const allCard = `<div class="clinic-card" data-clinic="ALL" style="border-color:var(--navy);background:linear-gradient(135deg,#EEF2F7,#E0F2FE);">
+
+  // All Clinics admin card
+  const allCard = `<div class="clinic-card" data-clinic="ALL" style="border-color:var(--navy);background:linear-gradient(135deg,#EEF2F7,#E0F2FE);grid-column:1/-1;">
     <div class="ctop">
-      <div class="cavatar" style="background:var(--grad);">🏥</div>
-      <div><div class="cname">All Clinics — Admin View</div><div class="csub">Full access across all 13 clinics</div></div>
+      <div class="cavatar" style="background:var(--grad);width:42px;height:42px;">🏥</div>
+      <div>
+        <div class="cname" style="font-size:14px;">All Clinics — Admin View</div>
+        <div class="csub">Full access across all 13 clinics · PDAE Services</div>
+      </div>
+      <div class="cbadge" style="background:var(--navy);color:#fff;">Admin</div>
     </div>
     <div class="cstats">
-      <div class="cstat"><div class="clabel">Clinics</div><div class="cval">13</div></div>
-      <div class="cstat"><div class="clabel">Access</div><div class="cval" style="font-size:11px;">Full Admin</div></div>
+      <div class="cstat"><div class="clabel">Total Clinics</div><div class="cval">13</div></div>
+      <div class="cstat"><div class="clabel">All Scopes</div><div class="cval" style="font-size:11px;">HCO · PP · PTAR · OCR · Pre-D · Sunbit</div></div>
     </div>
   </div>`;
+
   grid.innerHTML = allCard + ALL_CLINICS.map(code=>{
     const info = CLINIC_INFO[code]||{name:code,manager:''};
+    // Get pending counts from live data if available
+    const hcoPending  = getRows('hco').filter(r=>r[9]===code && isPending(r[7])).length;
+    const ptarPending = getRows('ptar').filter(r=>r[3]===code && isPending(r[8])).length;
+    const ocrPending  = getRows('ocr').filter(r=>r[3]===code && isPending(r[8])).length;
+    const predPending = getRows('pred').filter(r=>r[2]===code && isPending(r[8])).length;
+    const totalPending = hcoPending + ptarPending + ocrPending + predPending;
+    const hasData = totalPending > 0;
+
     return `<div class="clinic-card" data-clinic="${code}">
       <div class="ctop">
         <div class="cavatar">${code.charAt(0)}</div>
-        <div><div class="cname">${info.name}</div><div class="csub">${code} · ${info.manager}</div></div>
-        <div class="cbadge">Active</div>
+        <div>
+          <div class="cname">${info.name}</div>
+          <div class="csub">${info.manager || 'No manager assigned'}</div>
+        </div>
+        ${hasData
+          ? `<div class="cbadge" style="background:var(--redbg);color:var(--red);">⚠ ${totalPending} pending</div>`
+          : `<div class="cbadge">✓ Clear</div>`
+        }
       </div>
       <div class="cstats">
-        <div class="cstat"><div class="clabel">Clinic</div><div class="cval">${code}</div></div>
-        <div class="cstat"><div class="clabel">Manager</div><div class="cval" style="font-size:11px;">${info.manager}</div></div>
+        <div class="cstat">
+          <div class="clabel">HCO</div>
+          <div class="cval" style="font-size:13px;color:${hcoPending>0?'var(--red)':'var(--green)'};">${hcoPending||'—'}</div>
+        </div>
+        <div class="cstat">
+          <div class="clabel">PTAR</div>
+          <div class="cval" style="font-size:13px;color:${ptarPending>0?'var(--red)':'var(--green)'};">${ptarPending||'—'}</div>
+        </div>
+        <div class="cstat">
+          <div class="clabel">OCR</div>
+          <div class="cval" style="font-size:13px;color:${ocrPending>0?'var(--red)':'var(--green)'};">${ocrPending||'—'}</div>
+        </div>
+        <div class="cstat">
+          <div class="clabel">Pre-D</div>
+          <div class="cval" style="font-size:13px;color:${predPending>0?'var(--red)':'var(--green)'};">${predPending||'—'}</div>
+        </div>
       </div>
     </div>`;
   }).join('');
+
   document.querySelectorAll('.clinic-card').forEach(card=>{
     card.addEventListener('click',()=>openGateFor(card.getAttribute('data-clinic')));
   });
@@ -2162,7 +2198,29 @@ document.getElementById('btn-switch').addEventListener('click',()=>{
   document.getElementById('gate-password').value='';
   selectedClinic=null;
   document.getElementById('landing').style.display='block';
+  // Refresh clinic cards with live pending counts
+  renderLanding();
+  updateLandSummary();
 });
+
+function updateLandSummary() {
+  const el = document.getElementById('land-summary');
+  if(!el) return;
+  const scopes = [
+    { key:'hco', col:7, clinicCol:9, label:'HCO' },
+    { key:'ptar', col:8, clinicCol:3, label:'PTAR' },
+    { key:'ocr', col:8, clinicCol:3, label:'OCR' },
+    { key:'pred', col:8, clinicCol:2, label:'Pre-D' },
+  ];
+  const chips = scopes.map(sc => {
+    const pending = getRows(sc.key).filter(r=>isPending(r[sc.col])).length;
+    if(!pending) return '';
+    return `<div style="background:var(--redbg);color:var(--red);padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;">
+      ${sc.label}: ${pending.toLocaleString()} pending
+    </div>`;
+  }).filter(Boolean).join('');
+  el.innerHTML = chips ? `<div style="font-size:10px;font-weight:700;color:var(--text2);align-self:center;">TOTAL BACKLOG:</div>${chips}` : '';
+}
 
 // ── ENTER WORKSPACE ───────────────────────────────────────────────────────────
 async function enterWorkspace(email, clinics){
