@@ -1815,8 +1815,9 @@ function filterByDateRange(rows, dateCol, preset) {
   const range = getDateRange(preset);
   if(!range) return rows;
   return rows.filter(r => {
-    const d = new Date(r[dateCol]);
-    if(isNaN(d)) return false;
+    const ts = parseDate(r[dateCol]);
+    if(!ts) return false;
+    const d = new Date(ts);
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     return day >= range.from && day <= range.to;
   });
@@ -1856,6 +1857,16 @@ function makeDateRangeBar(scope) {
 function parseDate(val) {
   if(!val) return 0;
   const s = String(val).trim();
+  // Handle MM/DD/YYYY format from Google Sheets
+  const mmddyyyy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(mmddyyyy) {
+    return new Date(parseInt(mmddyyyy[3]), parseInt(mmddyyyy[1])-1, parseInt(mmddyyyy[2])).getTime();
+  }
+  // Handle YYYY-MM-DD
+  const yyyymmdd = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(yyyymmdd) {
+    return new Date(parseInt(yyyymmdd[1]), parseInt(yyyymmdd[2])-1, parseInt(yyyymmdd[3])).getTime();
+  }
   const d = new Date(s);
   return isNaN(d.getTime()) ? 0 : d.getTime();
 }
