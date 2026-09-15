@@ -694,6 +694,32 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
       <p class="sub">Records resolved per team member (by Initials).</p>
       <div id="team-perf-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;"></div>
     </div>
+
+    <!-- Daily Work Report -->
+    <div class="card">
+      <h3>📅 Daily Work Report</h3>
+      <p class="sub">Assigned vs Resolved per scope for a selected date.</p>
+
+      <!-- Date Picker Controls -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;background:#F8FAFC;padding:10px 14px;border-radius:8px;border:1px solid var(--border);">
+        <button class="sec sm" onclick="shiftWorkDate(-1)">← Prev</button>
+        <input type="date" id="work-report-date" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;color:var(--text);">
+        <button class="sec sm" onclick="shiftWorkDate(1)">Next →</button>
+        <select id="work-report-scope" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12.5px;">
+          <option value="all">All Scopes</option>
+          <option value="hco">HCO Audits</option>
+          <option value="pp">PP Audits</option>
+          <option value="ptar">PTAR</option>
+          <option value="ocr">OCR</option>
+          <option value="pred">Pre-D/Pre-Auth</option>
+        </select>
+        <button onclick="renderWorkReport()">📊 View Report</button>
+        <button class="sec sm" onclick="setWorkDateToday()">Today</button>
+      </div>
+
+      <!-- Report Table -->
+      <div id="work-report-output"></div>
+    </div>
   </div>
 
 </div><!-- /wrap -->
@@ -2401,6 +2427,160 @@ function jumpToScopeByInitials(scope, ini) {
   if(el){ el.value = ini; el.dispatchEvent(new Event('input')); }
 }
 
+
+// ── DAILY WORK REPORT ─────────────────────────────────────────
+function initWorkReport() {
+  // Set default date to today
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  const el = document.getElementById('work-report-date');
+  if(el) el.value = `${yyyy}-${mm}-${dd}`;
+}
+
+function setWorkDateToday() {
+  const today = new Date();
+  const el = document.getElementById('work-report-date');
+  if(el) {
+    el.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  }
+  renderWorkReport();
+}
+
+function shiftWorkDate(days) {
+  const el = document.getElementById('work-report-date');
+  if(!el || !el.value) return;
+  const d = new Date(el.value);
+  d.setDate(d.getDate() + days);
+  el.value = d.toISOString().slice(0,10);
+  renderWorkReport();
+}
+
+function isSameDate(val, targetDate) {
+  if(!val) return false;
+  const s = String(val).trim();
+  // Parse MM/DD/YYYY
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m1) {
+    const d = new Date(parseInt(m1[3]), parseInt(m1[1])-1, parseInt(m1[2]));
+    return d.toDateString() === targetDate.toDateString();
+  }
+  // Parse YYYY-MM-DD
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m2) {
+    const d = new Date(parseInt(m2[1]), parseInt(m2[2])-1, parseInt(m2[3]));
+    return d.toDateString() === targetDate.toDateString();
+  }
+  return false;
+}
+
+function renderWorkReport() {
+  const dateEl  = document.getElementById('work-report-date');
+  const scopeEl = document.getElementById('work-report-scope');
+  const output  = document.getElementById('work-report-output');
+  if(!dateEl || !dateEl.value || !output) return;
+
+  const targetDate = new Date(dateEl.value + 'T00:00:00');
+  const scopeFilter = scopeEl ? scopeEl.value : 'all';
+
+  const scopeConfig = [
+    { key:'hco',  label:'🔍 HCO Audits',    dateCol:0, commentCol:7 },
+    { key:'pp',   label:'📋 PP Audits',      dateCol:0, commentCol:7 },
+    { key:'ptar', label:'💰 PTAR',           dateCol:0, commentCol:8 },
+    { key:'ocr',  label:'📄 OCR',            dateCol:0, commentCol:8 },
+    { key:'pred', label:'✅ Pre-D/Pre-Auth', dateCol:0, commentCol:8 },
+  ];
+
+  const scopes = scopeFilter === 'all' ? scopeConfig : scopeConfig.filter(s=>s.key===scopeFilter);
+
+  let grandAssigned=0, grandResolved=0;
+  const rows = scopes.map(sc => {
+    const all = getRows(sc.key);
+    const assigned = all.filter(r => isSameDate(r[sc.dateCol], targetDate));
+    const resolved = assigned.filter(r => !isPending(r[sc.commentCol]));
+    const pending  = assigned.length - resolved.length;
+    const pct      = assigned.length > 0 ? Math.round(resolved.length/assigned.length*100) : 0;
+    grandAssigned += assigned.length;
+    grandResolved += resolved.length;
+    return { label:sc.label, assigned:assigned.length, resolved:resolved.length, pending, pct, key:sc.key };
+  });
+
+  const grandPct = grandAssigned > 0 ? Math.round(grandResolved/grandAssigned*100) : 0;
+  const grandPending = grandAssigned - grandResolved;
+
+  const dateStr = targetDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  output.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;">
+      Report for: ${dateStr}
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Scope</th>
+            <th style="text-align:center;">Assigned</th>
+            <th style="text-align:center;color:var(--green);">Resolved</th>
+            <th style="text-align:center;color:var(--red);">Pending</th>
+            <th>% Done</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`
+            <tr style="cursor:pointer;" onclick="jumpToScopeDate('${r.key}')">
+              <td style="font-weight:700;">${r.label}</td>
+              <td style="text-align:center;font-weight:700;">${r.assigned}</td>
+              <td style="text-align:center;font-weight:700;color:var(--green);">${r.resolved}</td>
+              <td style="text-align:center;font-weight:700;color:${r.pending>0?'var(--red)':'var(--green)'};">${r.pending}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="background:var(--border);border-radius:4px;height:8px;width:80px;overflow:hidden;">
+                    <div style="background:${r.pct>=80?'var(--green)':r.pct>=60?'var(--amber)':'var(--red)'};height:8px;border-radius:4px;width:${r.pct}%;transition:width .3s;"></div>
+                  </div>
+                  <span style="font-size:11.5px;font-weight:700;color:${r.pct>=80?'var(--green)':r.pct>=60?'var(--amber)':'var(--red)'};">${r.pct}%</span>
+                </div>
+              </td>
+            </tr>`).join('')}
+          <tr style="background:var(--gray);border-top:2px solid var(--border);">
+            <td style="font-weight:800;">📊 TOTAL</td>
+            <td style="text-align:center;font-weight:800;">${grandAssigned}</td>
+            <td style="text-align:center;font-weight:800;color:var(--green);">${grandResolved}</td>
+            <td style="text-align:center;font-weight:800;color:${grandPending>0?'var(--red)':'var(--green)'};">${grandPending}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="background:var(--border);border-radius:4px;height:8px;width:80px;overflow:hidden;">
+                  <div style="background:${grandPct>=80?'var(--green)':grandPct>=60?'var(--amber)':'var(--red)'};height:8px;border-radius:4px;width:${grandPct}%;"></div>
+                </div>
+                <span style="font-size:11.5px;font-weight:800;color:${grandPct>=80?'var(--green)':grandPct>=60?'var(--amber)':'var(--red)'};">${grandPct}%</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    ${grandAssigned===0 ? '<div class="empty">No records assigned on this date.</div>' : ''}
+  `;
+}
+
+function jumpToScopeDate(scope) {
+  const dateEl = document.getElementById('work-report-date');
+  if(!dateEl || !dateEl.value) return;
+  // Switch to scope tab
+  document.querySelectorAll('.scope-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.scope-panel').forEach(p=>p.classList.remove('active'));
+  const tab = document.querySelector(`.scope-tab[data-scope="${scope}"]`);
+  if(tab) tab.classList.add('active');
+  document.getElementById('scope-'+scope).classList.add('active');
+  // Set date filter to today
+  _dateFilters[scope] = 'today';
+  if(scope==='hco') renderHCO(0);
+  else if(scope==='pp') renderPP(0);
+  else if(scope==='ptar') renderPTAR(0);
+  else if(scope==='ocr') renderOCR(0);
+  else if(scope==='pred') renderPred(0);
+}
+
 // ── LANDING ───────────────────────────────────────────────────────────────────
 function renderLanding(){
   document.getElementById('land-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -2656,7 +2836,7 @@ document.querySelectorAll('.scope-tab').forEach(btn=>{
     const scope = btn.getAttribute('data-scope');
     document.getElementById('scope-'+scope).classList.add('active');
     if(scope === 'ack') renderAck();
-    if(scope === 'summary') renderSummary();
+    if(scope === 'summary') { renderSummary(); initWorkReport(); }
   });
 });
 
