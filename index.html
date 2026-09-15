@@ -855,6 +855,11 @@ function setBadge(state){
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function parseAmt(v) {
+  if(v === null || v === undefined || v === '') return 0;
+  const n = parseFloat(String(v).replace(/[$,\s]/g,''));
+  return isNaN(n) ? 0 : n;
+}
 function fmtMoney(n){ return '$'+Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
 function daysBetween(ds){
   if(!ds) return 0;
@@ -1369,7 +1374,8 @@ function renderOCR(page=0){
       <td><b><span onclick="showUnifiedDetail('ocr',${page*PAGE_SIZE+i},window._ocrFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>
       <td><span class="clinic-chip">${esc(r[3])}</span></td>
       <td>${esc(r[4])}</td>
-      <td>${esc(r[5])}</td><td>${esc(r[6])}</td>
+      <td style="font-weight:700;">$${parseAmt(r[5]).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="font-weight:700;color:var(--green);">$${parseAmt(r[6]).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
       <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
       <td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td>
     </tr>`;
