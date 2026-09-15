@@ -1188,7 +1188,7 @@ function renderPTAR(page=0){
   const open = all.filter(r=>isPending(r[8])).length;
   const totalAmt = all.reduce((s,r)=>s+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0),0);
   document.getElementById('ptar-kpi-total').textContent = all.length.toLocaleString();
-  document.getElementById('ptar-kpi-amount').textContent = fmtMoney(totalAmt);
+  document.getElementById('ptar-kpi-amount').textContent = '$' + totalAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('ptar-kpi-open').textContent = open.toLocaleString();
   document.getElementById('ptar-kpi-resolved').textContent = (all.length-open).toLocaleString();
   updatePRDashboard('ptar', all, 8);
@@ -1215,7 +1215,11 @@ function renderPTAR(page=0){
       <td><b><span onclick="showUnifiedDetail('ptar',${page*PAGE_SIZE+i},window._ptarFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td>
       <td>${esc(r[2])}</td>
       <td><span class="clinic-chip">${esc(r[3])}</span></td>
-      <td style="font-weight:700;color:${resolved?'var(--green)':'var(--red)'};">${esc(r[4])}</td>
+      <td style="font-weight:800;color:${resolved?'var(--green)':'var(--red)'};">
+        ${parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0) > 0
+          ? '<span style="font-size:10px;opacity:.7;">$</span>' + parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})
+          : '—'}
+      </td>
       <td>${esc(r[5])}</td>
       <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td>
       <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td>
@@ -1709,11 +1713,23 @@ function showUnifiedDetail(scope, idx, rows) {
 
   document.getElementById('unified-modal-title').textContent = SCOPE_TITLES[scope] || 'Record Detail';
   const fields = SCOPE_FIELDS[scope] || [];
-  document.getElementById('unified-modal-body').innerHTML = fields.map((f,i)=>`
-    <div class="modal-row">
+  document.getElementById('unified-modal-body').innerHTML = fields.map((f,i)=>{
+    let val = r[i] || '';
+    // Format outstanding amount for PTAR
+    if(scope === 'ptar' && i === 4 && val) {
+      const num = parseFloat(String(val).replace(/[^0-9.]/g,''));
+      if(!isNaN(num)) val = '$' + num.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    // Format submitted/paid for OCR
+    if(scope === 'ocr' && (i === 5 || i === 6) && val) {
+      const num = parseFloat(String(val).replace(/[^0-9.]/g,''));
+      if(!isNaN(num)) val = '$' + num.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    return `<div class="modal-row">
       <span class="lbl">${f}</span>
-      <span style="max-width:220px;word-break:break-word;text-align:right;">${esc(r[i]||'')}</span>
-    </div>`).join('');
+      <span style="max-width:220px;word-break:break-word;text-align:right;${scope==='ptar'&&i===4?'font-weight:800;color:var(--red);font-size:14px;':''}">${esc(String(val))}</span>
+    </div>`;
+  }).join('');
 
   // Pre-fill onshore comment and status
   const commentCol = ONSHORE_COL[scope] || 7;
@@ -2067,10 +2083,11 @@ function renderPtarAging(rows) {
   kpiRow.innerHTML = buckets.map(b=>{
     const count = aged.filter(r=>r.days>=b.min&&r.days<=b.max).length;
     const amt = aged.filter(r=>r.days>=b.min&&r.days<=b.max).reduce((s,r)=>s+r.amt,0);
+    const amtFmt = '$' + amt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     return `<div class="kpi" style="border-top:3px solid ${b.color};">
       <div class="label">${b.label}</div>
       <div class="value" style="color:${b.color};font-size:20px;">${count}</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:2px;">${fmtMoney(amt)}</div>
+      <div style="font-size:11px;font-weight:700;color:${b.color};margin-top:2px;">${amtFmt}</div>
     </div>`;
   }).join('');
 
@@ -2081,7 +2098,7 @@ function renderPtarAging(rows) {
     return `<tr>
       <td><span style="color:${b.color};font-weight:700;">${b.label}</span></td>
       <td style="font-weight:700;">${count}</td>
-      <td style="font-weight:700;">${fmtMoney(amt)}</td>
+      <td style="font-weight:700;color:var(--red);">$${amt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;">
           <div style="background:${b.color};height:6px;border-radius:3px;width:${pct}px;max-width:80px;"></div>
