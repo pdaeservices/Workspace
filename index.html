@@ -387,16 +387,37 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <span class="pr-pct" id="ptar-pr-resolved-pct"></span>
       </div>
     </div>
+
+    <!-- KPI Row — same for all roles -->
     <div class="kpi-row">
       <div class="kpi"><div class="label">Total Accounts</div><div class="value" id="ptar-kpi-total">—</div></div>
-      <div class="kpi"><div class="label">Outstanding ($)</div><div class="value red" id="ptar-kpi-amount">—</div></div>
+      <div class="kpi"><div class="label">💰 Outstanding ($)</div><div class="value red" id="ptar-kpi-amount">—</div></div>
+      <div class="kpi"><div class="label">📋 Not Contacted</div><div class="value red" id="ptar-kpi-not-contacted">—</div></div>
+      <div class="kpi"><div class="label">✅ Contacted</div><div class="value green" id="ptar-kpi-contacted">—</div></div>
       <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="ptar-kpi-open">—</div></div>
       <div class="kpi"><div class="label">Resolved</div><div class="value green" id="ptar-kpi-resolved">—</div></div>
     </div>
-    <div class="card">
-      <h3>Pending by reason</h3>
-      <p class="sub">Outstanding PTAR accounts grouped by category.</p>
-      <div class="chart-wrap"><canvas id="ptar-pie"></canvas></div>
+
+    <!-- Admin only: Clinic Breakdown -->
+    <div class="card" id="ptar-clinic-breakdown" style="display:none;">
+      <h3>🏥 Clinic Breakdown</h3>
+      <p class="sub">Outstanding balance and pending accounts per clinic — click any row to filter.</p>
+      <div class="tbl-wrap">
+        <table class="breakdown-tbl">
+          <thead>
+            <tr>
+              <th>Clinic</th>
+              <th>Total</th>
+              <th>Outstanding ($)</th>
+              <th>Pending</th>
+              <th>Resolved</th>
+              <th>Not Contacted</th>
+              <th>Contacted</th>
+            </tr>
+          </thead>
+          <tbody id="ptar-breakdown-tbody"></tbody>
+        </table>
+      </div>
     </div>
     <div class="card">
       <h3>PTAR collection reminders</h3>
