@@ -446,6 +446,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
 
   <!-- OCR -->
   <div class="scope-panel" id="scope-ocr">
+    <!-- Pending/Resolved pills -->
     <div class="pr-dashboard">
       <div class="pr-card pending" id="ocr-pr-pending" onclick="filterByStatus('ocr','open')">
         <span class="pr-icon">🔴</span>
@@ -460,15 +461,59 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
         <span class="pr-pct" id="ocr-pr-resolved-pct"></span>
       </div>
     </div>
+
+    <!-- KPI Row -->
     <div class="kpi-row">
       <div class="kpi"><div class="label">Total Claims</div><div class="value" id="ocr-kpi-total">—</div></div>
-      <div class="kpi"><div class="label">Denied</div><div class="value red" id="ocr-kpi-denied">—</div></div>
-      <div class="kpi"><div class="label">Pending</div><div class="value" style="color:var(--amber)" id="ocr-kpi-pending">—</div></div>
-      <div class="kpi"><div class="label">Open (No Onshore Action)</div><div class="value red" id="ocr-kpi-open">—</div></div>
+      <div class="kpi"><div class="label">💵 Submitted $</div><div class="value" id="ocr-kpi-submitted">—</div></div>
+      <div class="kpi"><div class="label">💰 Paid $</div><div class="value green" id="ocr-kpi-paid">—</div></div>
+      <div class="kpi"><div class="label">📊 Collection %</div><div class="value" id="ocr-kpi-collection">—</div></div>
+      <div class="kpi"><div class="label">❌ Denied</div><div class="value red" id="ocr-kpi-denied">—</div></div>
+      <div class="kpi"><div class="label">🔴 Open</div><div class="value red" id="ocr-kpi-open">—</div></div>
     </div>
+
+    <!-- Aging Buckets -->
     <div class="card">
-      <h3>Top outcomes</h3>
-      <div class="chart-wrap"><canvas id="ocr-pie"></canvas></div>
+      <h3>📊 Claims Aging — Total Outcomes</h3>
+      <p class="sub">Based on Date Sent — how long claims have been outstanding.</p>
+      <div class="kpi-row" id="ocr-aging-kpis"></div>
+      <div class="tbl-wrap" style="margin-top:10px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Aging Bucket</th>
+              <th>Claims</th>
+              <th>Submitted $</th>
+              <th>Paid $</th>
+              <th>Collection %</th>
+              <th>% of Total</th>
+            </tr>
+          </thead>
+          <tbody id="ocr-aging-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Admin only: Clinic Breakdown -->
+    <div class="card" id="ocr-clinic-breakdown" style="display:none;">
+      <h3>🏥 Clinic Breakdown</h3>
+      <p class="sub">Claims performance per clinic — click any row to filter.</p>
+      <div class="tbl-wrap">
+        <table class="breakdown-tbl">
+          <thead>
+            <tr>
+              <th>Clinic</th>
+              <th>Total</th>
+              <th>Submitted $</th>
+              <th>Paid $</th>
+              <th>Collection %</th>
+              <th>Denied</th>
+              <th>Open</th>
+            </tr>
+          </thead>
+          <tbody id="ocr-breakdown-tbody"></tbody>
+        </table>
+      </div>
     </div>
     <div class="card">
       <h3>All claims</h3>
