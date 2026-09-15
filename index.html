@@ -1343,23 +1343,105 @@ function renderOCR(page=0){
   const ocrBar = document.getElementById('ocr-date-bar');
   if(ocrBar) ocrBar.innerHTML = makeDateRangeBar('ocr');
 
-  const denied = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
-  const pending = all.filter(r=>String(r[10]||'').toLowerCase().includes('pending')).length;
-  const open = all.filter(r=>isPending(r[8])).length;
+  const denied    = all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
+  const open      = all.filter(r=>isPending(r[8])).length;
+  const totalSub  = all.reduce((s,r)=>s+parseAmt(r[5]),0);
+  const totalPaid = all.reduce((s,r)=>s+parseAmt(r[6]),0);
+  const collRate  = totalSub > 0 ? Math.round(totalPaid/totalSub*100) : 0;
+
   document.getElementById('ocr-kpi-total').textContent = all.length.toLocaleString();
+  document.getElementById('ocr-kpi-submitted').textContent = '$'+totalSub.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('ocr-kpi-paid').textContent = '$'+totalPaid.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('ocr-kpi-collection').textContent = collRate+'%';
   document.getElementById('ocr-kpi-denied').textContent = denied.toLocaleString();
-  document.getElementById('ocr-kpi-pending').textContent = pending.toLocaleString();
   document.getElementById('ocr-kpi-open').textContent = open.toLocaleString();
   updatePRDashboard('ocr', all, 8);
 
-  const byCat = {};
-  all.forEach(r=>{ const c=r[10]||'Other'; byCat[c]=(byCat[c]||0)+1; });
-  const catL = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).slice(0,8);
-  makeChart('ocr-pie', catL, catL.map(c=>byCat[c]), 'doughnut', function(label){
-    document.getElementById('ocr-f-cat').value = label;
-    renderOCR(0);
-    document.getElementById('ocr-tbody').scrollIntoView({behavior:'smooth'});
+  // Color collection rate
+  const collEl = document.getElementById('ocr-kpi-collection');
+  if(collEl) collEl.style.color = collRate>=80?'var(--green)':collRate>=60?'var(--amber)':'var(--red)';
+
+  // Aging buckets
+  const agingBuckets = [
+    { label:'0-30 days',   min:0,   max:30,  color:'#16A34A', icon:'🟢' },
+    { label:'31-60 days',  min:31,  max:60,  color:'#F59E0B', icon:'🟡' },
+    { label:'61-90 days',  min:61,  max:90,  color:'#F97316', icon:'🟠' },
+    { label:'91-120 days', min:91,  max:120, color:'#EF4444', icon:'🔴' },
+    { label:'120+ days',   min:121, max:9999,color:'#7F1D1D', icon:'⛔' },
+  ];
+  const today2 = new Date();
+  const agedOcr = all.map(r=>{
+    const ts = parseDate(r[0]);
+    const days = ts ? Math.max(0,Math.round((today2-new Date(ts))/86400000)) : 0;
+    return { days, sub:parseAmt(r[5]), paid:parseAmt(r[6]) };
   });
+  const totalClaims = agedOcr.length||1;
+
+  const agingKpiRow = document.getElementById('ocr-aging-kpis');
+  const agingTbody  = document.getElementById('ocr-aging-tbody');
+  if(agingKpiRow){
+    agingKpiRow.innerHTML = agingBuckets.map(b=>{
+      const items = agedOcr.filter(r=>r.days>=b.min&&r.days<=b.max);
+      const sub = items.reduce((s,r)=>s+r.sub,0);
+      return `<div class="kpi" style="border-top:3px solid ${b.color};">
+        <div class="label">${b.icon} ${b.label}</div>
+        <div class="value" style="color:${b.color};font-size:20px;">${items.length}</div>
+        <div style="font-size:10.5px;font-weight:700;color:${b.color};margin-top:2px;">$${sub.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      </div>`;
+    }).join('');
+  }
+  if(agingTbody){
+    agingTbody.innerHTML = agingBuckets.map(b=>{
+      const items = agedOcr.filter(r=>r.days>=b.min&&r.days<=b.max);
+      const sub  = items.reduce((s,r)=>s+r.sub,0);
+      const paid = items.reduce((s,r)=>s+r.paid,0);
+      const coll = sub>0?Math.round(paid/sub*100):0;
+      const pct  = Math.round(items.length/totalClaims*100);
+      return `<tr>
+        <td><span style="color:${b.color};font-weight:700;">${b.icon} ${b.label}</span></td>
+        <td style="font-weight:700;">${items.length.toLocaleString()}</td>
+        <td style="font-weight:700;">$${sub.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="font-weight:700;color:var(--green);">$${paid.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="font-weight:700;color:${coll>=80?'var(--green)':coll>=60?'var(--amber)':'var(--red)'};">${coll}%</td>
+        <td><div style="display:flex;align-items:center;gap:6px;">
+          <div style="background:${b.color};height:6px;border-radius:3px;width:${Math.min(pct,80)}px;"></div>
+          <span style="font-size:11px;">${pct}%</span>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Admin clinic breakdown
+  const ocrBreakdown = document.getElementById('ocr-clinic-breakdown');
+  if(currentRole==='admin' && myClinics.length>1){
+    ocrBreakdown.style.display='block';
+    const byCl={};
+    all.forEach(r=>{
+      const cl=r[3]||'Unknown';
+      if(!byCl[cl]) byCl[cl]={total:0,sub:0,paid:0,denied:0,open:0};
+      byCl[cl].total++;
+      byCl[cl].sub+=parseAmt(r[5]);
+      byCl[cl].paid+=parseAmt(r[6]);
+      if(String(r[10]||'').toLowerCase().includes('denied')) byCl[cl].denied++;
+      if(isPending(r[8])) byCl[cl].open++;
+    });
+    document.getElementById('ocr-breakdown-tbody').innerHTML=Object.entries(byCl)
+      .sort((a,b)=>b[1].sub-a[1].sub)
+      .map(([cl,d])=>{
+        const coll=d.sub>0?Math.round(d.paid/d.sub*100):0;
+        return `<tr style="cursor:pointer;" onclick="jumpToClinicScope('ocr','${cl}')">
+          <td><span class="clinic-chip">${cl}</span></td>
+          <td>${d.total}</td>
+          <td style="font-weight:700;">$${d.sub.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+          <td style="font-weight:700;color:var(--green);">$${d.paid.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+          <td style="font-weight:700;color:${coll>=80?'var(--green)':coll>=60?'var(--amber)':'var(--red)'};">${coll}%</td>
+          <td style="color:var(--red);font-weight:700;">${d.denied}</td>
+          <td style="color:var(--red);font-weight:700;">${d.open}</td>
+        </tr>`;
+      }).join('');
+  } else {
+    if(ocrBreakdown) ocrBreakdown.style.display='none';
+  }
 
   populateFilter('ocr-f-clinic', all.map(r=>r[3]));
   populateFilter('ocr-f-cat', all.map(r=>r[10]));
