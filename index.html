@@ -1960,12 +1960,12 @@ async function saveUnifiedUpdate(scope, idx) {
   btn.disabled = true;
 
   try {
-    // POST to Web App
-    const res = await fetch(WEB_APP_URL, {
-      method: 'POST',
-      body: JSON.stringify({ scope, rowIdx: idx, comment, status, user: currentUser, pid, clinic, oldComment }),
-      headers: { 'Content-Type': 'application/json' }
+    // Use GET request to avoid CORS issues with Google Apps Script
+    const params = new URLSearchParams({
+      scope, rowIdx: idx, comment, status,
+      user: currentUser, pid, clinic, oldComment
     });
+    const res  = await fetch(`${WEB_APP_URL}?scope=save&${params.toString()}`);
     const data = await res.json();
     if(data.success) {
       btn.textContent = '✅ Saved!';
@@ -1975,8 +1975,7 @@ async function saveUnifiedUpdate(scope, idx) {
     }
   } catch(e) {
     console.warn('Save failed:', e);
-    // Still show saved locally
-    btn.textContent = '✅ Saved locally';
+    btn.textContent = '⚠ Saved locally';
     btn.style.background = 'var(--amber)';
   }
 
