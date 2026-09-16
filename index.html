@@ -1961,12 +1961,18 @@ async function saveUnifiedUpdate(scope, idx) {
 
   try {
     // Use GET request to avoid CORS issues with Google Apps Script
-    const params = new URLSearchParams({
-      scope, rowIdx: idx, comment, status,
-      user: currentUser, pid, clinic, oldComment
-    });
-    const res  = await fetch(`${WEB_APP_URL}?scope=save&${params.toString()}`);
-    const data = await res.json();
+    const url = WEB_APP_URL
+      + '?scope=save'
+      + '&rowIdx=' + encodeURIComponent(idx)
+      + '&comment=' + encodeURIComponent(comment)
+      + '&status=' + encodeURIComponent(status)
+      + '&user=' + encodeURIComponent(currentUser)
+      + '&pid=' + encodeURIComponent(pid)
+      + '&clinic=' + encodeURIComponent(clinic)
+      + '&oldComment=' + encodeURIComponent(oldComment);
+    const res  = await fetch(url, {redirect:'follow'});
+    const text = await res.text();
+    const data = JSON.parse(text);
     if(data.success) {
       btn.textContent = '✅ Saved!';
       btn.style.background = 'var(--green)';
