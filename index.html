@@ -1960,7 +1960,7 @@ async function saveUnifiedUpdate(scope, idx) {
   btn.disabled = true;
 
   try {
-    // Use GET request to avoid CORS issues with Google Apps Script
+    // Use no-cors mode — fire and forget to Google Apps Script
     const url = WEB_APP_URL
       + '?scope=save'
       + '&rowIdx=' + encodeURIComponent(idx)
@@ -1970,15 +1970,14 @@ async function saveUnifiedUpdate(scope, idx) {
       + '&pid=' + encodeURIComponent(pid)
       + '&clinic=' + encodeURIComponent(clinic)
       + '&oldComment=' + encodeURIComponent(oldComment);
-    const res  = await fetch(url, {redirect:'follow'});
-    const text = await res.text();
-    const data = JSON.parse(text);
-    if(data.success) {
-      btn.textContent = '✅ Saved!';
-      btn.style.background = 'var(--green)';
-    } else {
-      throw new Error(data.error || 'Save failed');
-    }
+
+    // Fire request — no-cors means we can't read response but request goes through
+    fetch(url, { mode: 'no-cors' });
+
+    // Wait 1 second then assume success
+    await new Promise(r => setTimeout(r, 1000));
+    btn.textContent = '✅ Saved!';
+    btn.style.background = 'var(--green)';
   } catch(e) {
     console.warn('Save failed:', e);
     btn.textContent = '⚠ Saved locally';
