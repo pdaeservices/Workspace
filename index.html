@@ -753,7 +753,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
 
 <script>
 // ── CONFIG ───────────────────────────────────────────────────────────────────
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx8LriDs9t3kfzqqdSS1LdwTgH5P4tOz4jdjNXH7OtTdMEJWwmcaNOHAhmoy9Utbkje/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz6QDPKhbzws2MtLaIeBeTwIb5juGFw_kpA7Rs7nwirhlcSalY_0YoPXrh3BMaIKC3F/exec';
 const PAGE_SIZE = 50;
 const OVERDUE_DAYS = 3;
 
@@ -1963,6 +1963,7 @@ async function saveUnifiedUpdate(scope, idx) {
     // Use no-cors mode — fire and forget to Google Apps Script
     const url = WEB_APP_URL
       + '?scope=save'
+      + '&tab=' + encodeURIComponent(scope)
       + '&rowIdx=' + encodeURIComponent(idx)
       + '&comment=' + encodeURIComponent(comment)
       + '&status=' + encodeURIComponent(status)
