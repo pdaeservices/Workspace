@@ -188,6 +188,7 @@ tr.row-pending:hover td{background:#FEF3C7 !important;}
 .age-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;min-width:40px;}
 .age-bar-fill{height:100%;border-radius:3px;}
 
+@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:640px){.grid2{grid-template-columns:1fr;}.clinic-grid{padding:0 16px 40px;}.land-header{padding:20px 16px;}}
 </style>
 </head>
@@ -1456,10 +1457,22 @@ function jumpToScopeDate(scope){
 
 // ── REFRESH ───────────────────────────────────────────────────────────────────
 async function refreshData(){
-  const btn=document.getElementById('btn-refresh');btn.textContent='⟳ Refreshing…';btn.style.opacity='0.6';btn.disabled=true;
-  await fetchAll();
+  const btn=document.getElementById('btn-refresh');btn.textContent='⧙ Refreshing…';btn.style.opacity='0.6';btn.disabled=true;
   const activeScope=document.querySelector('.scope-tab.active');const scope=activeScope?activeScope.getAttribute('data-scope'):'hco';
-  if(scope==='hco')renderHCO(0);else if(scope==='pp')renderPP(0);else if(scope==='ptar')renderPTAR(0);else if(scope==='ocr')renderOCR(0);else if(scope==='pred')renderPred(0);else if(scope==='sunbit')initSunbit();else if(scope==='summary')renderSummary();
+  // Show loading in current tab immediately
+  showScopeLoading(scope);
+  // Reload all scopes progressively
+  const loadScope=async(s,renderFn)=>{try{await fetchScope(s);renderFn();}catch(e){console.warn('Failed:',s,e);}};
+  await Promise.all([
+    loadScope('hco',()=>renderHCO(0)),
+    loadScope('pp',()=>renderPP(0)),
+    loadScope('ptar',()=>renderPTAR(0)),
+    loadScope('ocr',()=>renderOCR(0)),
+    loadScope('pred',()=>renderPred(0)),
+    loadScope('sunbit',()=>initSunbit()),
+  ]);
+  if(scope==='summary') renderSummary();
+  setBadge('ok');
   btn.textContent='✅ Refreshed!';btn.style.opacity='1';setTimeout(()=>{btn.textContent='🔄 Refresh';btn.disabled=false;},2000);
 }
 
@@ -1513,7 +1526,14 @@ function updateLandSummary(){
   el.innerHTML=chips?`<div style="font-size:10px;font-weight:700;color:var(--text2);align-self:center;">TOTAL BACKLOG:</div>${chips}`:'';
 }
 
-// ── ENTER WORKSPACE ───────────────────────────────────────────────────────────
+// ── ENTER WORKSPACE — PROGRESSIVE LOADING ────────────────────────────────────
+function showScopeLoading(scope){
+  const spinners={hco:'hco-tbody',pp:'pp-tbody',ptar:'ptar-tbody',ocr:'ocr-tbody',pred:'pred-tbody'};
+  const tbodyId=spinners[scope];if(!tbodyId) return;
+  const tbody=document.getElementById(tbodyId);
+  if(tbody) tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:28px;color:var(--text2);"><span style="display:inline-flex;align-items:center;gap:8px;font-size:12px;"><span style="width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;"></span>Loading data…</span></td></tr>';
+}
+
 async function enterWorkspace(email,clinics){
   currentUser=email;myClinics=selectedClinic?[selectedClinic]:clinics;
   document.getElementById('gate').style.display='none';document.getElementById('appview').style.display='block';
@@ -1521,8 +1541,19 @@ async function enterWorkspace(email,clinics){
   document.getElementById('user-title').textContent=roleLabels[currentRole]||email;
   document.getElementById('user-clinics').textContent=myClinics.join(' · ')+(currentRole==='admin'&&myClinics.length===ALL_CLINICS.length?' — full access':' — your clinic');
   applyRoleUI();setBadge('loading');
-  await fetchAll();
-  renderHCO(0);renderPP(0);renderPTAR(0);renderOCR(0);renderPred(0);initSunbit();
+  ['hco','pp','ptar','ocr','pred'].forEach(showScopeLoading);
+  const loadScope=async(scope,renderFn)=>{try{await fetchScope(scope);renderFn();}catch(e){console.warn('Failed:',scope,e);}};
+  let firstDone=false;
+  const tasks=[
+    loadScope('hco',()=>renderHCO(0)),
+    loadScope('pp',()=>renderPP(0)),
+    loadScope('ptar',()=>renderPTAR(0)),
+    loadScope('ocr',()=>renderOCR(0)),
+    loadScope('pred',()=>renderPred(0)),
+    loadScope('sunbit',()=>initSunbit()),
+  ];
+  tasks.forEach(t=>t.then(()=>{if(!firstDone){firstDone=true;setBadge('ok');}}));
+  Promise.all(tasks).then(()=>{setBadge('ok');updateLandSummary();}).catch(()=>setBadge('error'));
 }
 
 function applyRoleUI(){
