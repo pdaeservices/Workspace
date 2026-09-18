@@ -947,14 +947,16 @@ function renderHCO(page=0){
   document.getElementById('hco-kpi-total').textContent=totalAll.toLocaleString();
   document.getElementById('hco-kpi-open').textContent=open.toLocaleString();
   document.getElementById('hco-kpi-resolved').textContent=resolved.toLocaleString();
-  document.getElementById('hco-kpi-overdue').textContent=overdue.toLocaleString();
   updatePRDashboard('hco',all,7);
-  const openRows=all.filter(r=>isPending(r[7]));
-  const byCat={};openRows.forEach(r=>{const c=r[10]||'Other';if(!byCat[c])byCat[c]={total:0,overdue:0};byCat[c].total++;if(daysBetween(r[1])>=OVERDUE_DAYS)byCat[c].overdue++;});
-  const colors=CAT_COLORS;let ci=0;
-  document.getElementById('hco-today-grid').innerHTML=Object.entries(byCat).sort((a,b)=>b[1].total-a[1].total).slice(0,12).map(([cat,d])=>{const col=colors[ci++%colors.length];return `<div class="today-card" onclick="filterHCOByCategory('${cat.replace(/'/g,"\\'")}')"><div class="cathead"><span class="catdot" style="background:${col}"></span>${esc(cat)}</div><div class="row"><span>Open</span><b>${d.total}</b></div><div class="row od"><span>Overdue</span><b>${d.overdue}</b></div></div>`;}).join('');
-  const catLabels=Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).slice(0,10);
-  makeChart('hco-pie',catLabels,catLabels.map(c=>byCat[c].total),'doughnut',function(label){_filters.hco=label;document.getElementById('hco-f-cat').value=label;renderHCO(0);document.getElementById('hco-tbody').scrollIntoView({behavior:'smooth'});});
+  requestAnimationFrame(()=>{
+    updatePRDashboard('hco',all,7); // re-run after paint to ensure pills update
+    const openRows=all.filter(r=>isPending(r[7]));
+    const byCat={};openRows.forEach(r=>{const c=r[10]||'Other';if(!byCat[c])byCat[c]={total:0,overdue:0};byCat[c].total++;if(daysBetween(r[1])>=OVERDUE_DAYS)byCat[c].overdue++;});
+    const colors=CAT_COLORS;let ci=0;
+    document.getElementById('hco-today-grid').innerHTML=Object.entries(byCat).sort((a,b)=>b[1].total-a[1].total).slice(0,12).map(([cat,d])=>{const col=colors[ci++%colors.length];return `<div class="today-card" onclick="filterHCOByCategory('${cat.replace(/'/g,"\\'")}')"><div class="cathead"><span class="catdot" style="background:${col}"></span>${esc(cat)}</div><div class="row"><span>Open</span><b>${d.total}</b></div><div class="row od"><span>Overdue</span><b>${d.overdue}</b></div></div>`;}).join('');
+    const catLabels=Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).slice(0,10);
+    makeChart('hco-pie',catLabels,catLabels.map(c=>byCat[c].total),'doughnut',function(label){_filters.hco=label;document.getElementById('hco-f-cat').value=label;renderHCO(0);document.getElementById('hco-tbody').scrollIntoView({behavior:'smooth'});});
+  });
   if(myClinics.length>1){
     document.getElementById('hco-clinic-breakdown').style.display='block';
     const byCl={};all.forEach(r=>{if(!byCl[r[9]])byCl[r[9]]={total:0,open:0,resolved:0,overdue:0};byCl[r[9]].total++;if(isPending(r[7])){byCl[r[9]].open++;if(daysBetween(r[1])>=OVERDUE_DAYS)byCl[r[9]].overdue++;}else byCl[r[9]].resolved++;});
