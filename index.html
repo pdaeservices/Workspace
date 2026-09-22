@@ -915,6 +915,13 @@ function parseDate(val){
   return isNaN(d.getTime())?0:d.getTime();
 }
 function sortByDateDesc(rows,col){ return [...rows].sort((a,b)=>parseDate(b[col])-parseDate(a[col])); }
+
+// Sort: open items newest→oldest first, then resolved items newest→oldest
+function sortOpenFirst(rows,col,commentCol){
+  const open=rows.filter(r=>isPending(r[commentCol])).sort((a,b)=>parseDate(b[col])-parseDate(a[col]));
+  const resolved=rows.filter(r=>!isPending(r[commentCol])).sort((a,b)=>parseDate(b[col])-parseDate(a[col]));
+  return [...open,...resolved];
+}
 function daysAgo(dateVal){ const ts=parseDate(dateVal); if(!ts) return 0; return Math.max(0,Math.round((Date.now()-ts)/86400000)); }
 
 const _dateFilters={};
@@ -962,7 +969,7 @@ function renderHCO(page=0){
     return true;
   });
   rows=filterByDateRange(rows,0,_dateFilters['hco']||'all');
-  rows=sortByDateDesc(rows,0);
+  rows=sortOpenFirst(rows,0,7);
   const hcoBar=document.getElementById('hco-date-bar');if(hcoBar) hcoBar.innerHTML=makeDateRangeBar('hco');
   const ppBar=document.getElementById('pp-date-bar');if(ppBar) ppBar.innerHTML=makeDateRangeBar('pp');
   const totalAll=all.length;const open=all.filter(r=>isPending(r[7])).length;const resolved=totalAll-open;const overdue=all.filter(r=>isPending(r[7])&&daysBetween(r[1])>=OVERDUE_DAYS).length;
@@ -1004,7 +1011,7 @@ function renderPP(page=0){
   const cat=document.getElementById('pp-f-cat').value;
   const search=document.getElementById('pp-search').value.trim().toLowerCase();
   let rows=all.filter(r=>{if(clinic&&r[9]!==clinic) return false;if(cat&&r[10]!==cat) return false;if(search&&!String(r[2]||'').toLowerCase().includes(search)) return false;return true;});
-  rows=sortByDateDesc(rows,0);
+  rows=sortOpenFirst(rows,0,7);
   const t6=all.filter(r=>String(r[10]||'').includes('Table 6')).length;
   const t7=all.filter(r=>String(r[10]||'').includes('Table 7')).length;
   const t8=all.filter(r=>String(r[10]||'').includes('Table 8')).length;
@@ -1036,7 +1043,7 @@ function renderPTAR(page=0){
   const status=document.getElementById('ptar-f-status').value;
   const search=document.getElementById('ptar-search').value.trim().toLowerCase();
   let rows=all.filter(r=>{if(clinic&&r[3]!==clinic) return false;if(cat&&r[10]!==cat) return false;if(search&&!String(r[1]||'').toLowerCase().includes(search)) return false;if(status==='open'&&!isPending(r[8])) return false;if(status==='resolved'&&isPending(r[8])) return false;return true;});
-  rows=filterByDateRange(rows,0,_dateFilters['ptar']||'all');rows=sortByDateDesc(rows,0);
+  rows=filterByDateRange(rows,0,_dateFilters['ptar']||'all');rows=sortOpenFirst(rows,0,8);
   const ptarBar=document.getElementById('ptar-date-bar');if(ptarBar) ptarBar.innerHTML=makeDateRangeBar('ptar');
   const open=all.filter(r=>isPending(r[8])).length;
   const totalAmt=all.reduce((s,r)=>s+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0),0);
@@ -1065,7 +1072,7 @@ function renderOCR(page=0){
   const search=document.getElementById('ocr-search').value.trim().toLowerCase();
   const ocrStatus=window._ocrStatusFilter||'';
   let rows=all.filter(r=>{if(clinic&&r[3]!==clinic) return false;if(cat&&r[10]!==cat) return false;if(search&&!String(r[2]||'').toLowerCase().includes(search)) return false;if(ocrStatus==='open'&&!isPending(r[8])) return false;if(ocrStatus==='resolved'&&isPending(r[8])) return false;return true;});
-  rows=filterByDateRange(rows,0,_dateFilters['ocr']||'all');rows=sortByDateDesc(rows,0);
+  rows=filterByDateRange(rows,0,_dateFilters['ocr']||'all');rows=sortOpenFirst(rows,0,8);
   const ocrBar=document.getElementById('ocr-date-bar');if(ocrBar) ocrBar.innerHTML=makeDateRangeBar('ocr');
   const denied=all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
   const open=all.filter(r=>isPending(r[8])).length;
@@ -1108,7 +1115,7 @@ function renderPred(page=0){
   const search=document.getElementById('pred-search').value.trim().toLowerCase();
   const predStatus=window._predStatusFilter||'';
   let rows=all.filter(r=>{if(clinic&&r[2]!==clinic) return false;if(cat&&r[10]!==cat) return false;if(search&&!String(r[1]||'').toLowerCase().includes(search)) return false;if(predStatus==='open'&&!isPending(r[8])) return false;if(predStatus==='resolved'&&isPending(r[8])) return false;return true;});
-  rows=filterByDateRange(rows,0,_dateFilters['pred']||'all');rows=sortByDateDesc(rows,0);
+  rows=filterByDateRange(rows,0,_dateFilters['pred']||'all');rows=sortOpenFirst(rows,0,8);
   const predBar=document.getElementById('pred-date-bar');if(predBar) predBar.innerHTML=makeDateRangeBar('pred');
   const approved=all.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
   const denied=all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
