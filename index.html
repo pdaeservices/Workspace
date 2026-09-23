@@ -324,7 +324,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
         <button class="sm" onclick="exportCSV('hco')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>DOS</th><th>Patient ID</th><th>Clinic</th><th>Category</th><th>HCO Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+        <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>Patient ID</th><th id="hco-th-clinic">Clinic</th><th>Category</th><th>HCO Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
         <tbody id="hco-tbody"></tbody></table>
       </div>
       <div class="empty" id="hco-empty" style="display:none;">No records match this filter.</div>
@@ -364,7 +364,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
         <button class="sm" onclick="exportCSV('pp')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>DOS</th><th>Patient ID</th><th>Clinic</th><th>Category</th><th>Comment</th><th>Insurance</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+        <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>Patient ID</th><th id="pp-th-clinic">Clinic</th><th>Category</th><th>Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
         <tbody id="pp-tbody"></tbody></table>
       </div>
       <div class="empty" id="pp-empty" style="display:none;">No records match this filter.</div>
@@ -417,7 +417,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
         <button class="sm" onclick="exportCSV('ptar')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Date</th><th>Patient ID</th><th>PT Name</th><th>Clinic</th><th>Outstanding</th><th>Insurance</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
+        <table><thead><tr><th>Urgency</th><th>Date</th><th>Patient ID</th><th>PT Name</th><th id="ptar-th-clinic">Clinic</th><th>Outstanding</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
         <tbody id="ptar-tbody"></tbody></table>
       </div>
       <div class="empty" id="ptar-empty" style="display:none;">No records match this filter.</div>
@@ -480,7 +480,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
         <button class="sm" onclick="exportCSV('ocr')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Date Sent</th><th>Claim ID</th><th>Patient ID</th><th>Clinic</th><th>Insurance</th><th>Submitted</th><th>Paid</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+        <table><thead><tr><th>Urgency</th><th>Date Sent</th><th>Patient ID</th><th id="ocr-th-clinic">Clinic</th><th>Insurance</th><th>Submitted</th><th>Onshore Comment</th><th>Status</th></tr></thead>
         <tbody id="ocr-tbody"></tbody></table>
       </div>
       <div class="empty" id="ocr-empty" style="display:none;">No records match this filter.</div>
@@ -528,7 +528,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
         <button class="sm" onclick="exportCSV('pred')">⬇ Export Filtered</button>
       </div>
       <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Date of Request</th><th>Patient ID</th><th>Clinic</th><th>Insurance</th><th>Procedure</th><th>Provider</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Category</th></tr></thead>
+        <table><thead><tr><th>Urgency</th><th>Date of Request</th><th>Patient ID</th><th id="pred-th-clinic">Clinic</th><th>Insurance</th><th>Procedure</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
         <tbody id="pred-tbody"></tbody></table>
       </div>
       <div class="empty" id="pred-empty" style="display:none;">No records match this filter.</div>
@@ -994,7 +994,7 @@ function renderHCO(page=0){
   populateFilter('hco-f-clinic',all.map(r=>r[9]));populateFilter('hco-f-cat',all.map(r=>r[10]));
   window._hcoFiltered=rows;
   const sliced=rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('hco-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[7]);const overdue=isPending(r[7])&&daysBetween(r[1])>=OVERDUE_DAYS;const baseClass=resolved?'row-resolved':overdue?'row-overdue':'row-pending';const urgClass=urgencyRowClass(r[0],r[7]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');return `<tr class="${rowClass}">${urgencyBadge(r[0],r[7])}<td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b><span onclick="showUnifiedDetail('hco',${page*PAGE_SIZE+i},window._hcoFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td><td><span class="clinic-chip">${esc(r[9])}</span></td><td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[6])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td>${statusBadge(r[7],r[1])}</td></tr>`;}).join('');
+  document.getElementById('hco-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[7]);const urgClass=urgencyRowClass(r[0],r[7]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[9])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[7])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('hco',${page*PAGE_SIZE+i},window._hcoFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>${clinicCell}<td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[6])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td>${statusBadge(r[7],r[1])}</td></tr>`;}).join('');
   document.getElementById('hco-empty').style.display=rows.length?'none':'block';
   renderPager('hco',rows.length,page,'renderHCO');
 }
@@ -1026,7 +1026,7 @@ function renderPP(page=0){
   populateFilter('pp-f-clinic',all.map(r=>r[9]));populateFilter('pp-f-cat',all.map(r=>r[10]));
   window._ppFiltered=rows;
   const sliced=rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('pp-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[7]);const rowClass=urgencyRowClass(r[0],r[7]);return `<tr class="${resolved?'row-resolved':(rowClass||'')}">${urgencyBadge(r[0],r[7])}<td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b><span onclick="showUnifiedDetail('pp',${page*PAGE_SIZE+i},window._ppFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td><td><span class="clinic-chip">${esc(r[9])}</span></td><td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td><td>${esc(r[3])}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
+  document.getElementById('pp-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[7]);const urgClass=urgencyRowClass(r[0],r[7]);const rowClass=resolved?'row-resolved':(urgClass||'');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[9])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[7])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('pp',${page*PAGE_SIZE+i},window._ppFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>${clinicCell}<td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('pp-empty').style.display=rows.length?'none':'block';
   renderPager('pp',rows.length,page,'renderPP');
 }
@@ -1055,7 +1055,7 @@ function renderPTAR(page=0){
   populateFilter('ptar-f-clinic',all.map(r=>r[3]));populateFilter('ptar-f-cat',all.map(r=>r[10]));
   window._ptarFiltered=rows;
   const sliced=rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('ptar-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('ptar',${page*PAGE_SIZE+i},window._ptarFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td><td>${esc(r[2])}</td><td><span class="clinic-chip">${esc(r[3])}</span></td><td style="font-weight:800;color:${resolved?'var(--green)':'var(--red)'};">${parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0)>0?'<span style="font-size:10px;opacity:.7;">$</span>'+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td><td>${esc(r[5])}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
+  document.getElementById('ptar-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[3])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('ptar',${page*PAGE_SIZE+i},window._ptarFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td><td>${esc(r[2])}</td>${clinicCell}<td style="font-weight:800;color:${resolved?'var(--green)':'var(--red)'};">${parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0)>0?'<span style="font-size:10px;opacity:.7;">$</span>'+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('ptar-empty').style.display=rows.length?'none':'block';
   renderPager('ptar',rows.length,page,'renderPTAR');
 }
@@ -1098,7 +1098,7 @@ function renderOCR(page=0){
   populateFilter('ocr-f-clinic',all.map(r=>r[3]));populateFilter('ocr-f-cat',all.map(r=>r[10]));
   window._ocrFiltered=rows;
   const sliced=rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('ocr-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b><span onclick="showUnifiedDetail('ocr',${page*PAGE_SIZE+i},window._ocrFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td><td><span class="clinic-chip">${esc(r[3])}</span></td><td>${esc(r[4])}</td><td style="font-weight:700;">$${parseAmt(r[5]).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td style="font-weight:700;color:var(--green);">$${parseAmt(r[6]).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
+  document.getElementById('ocr-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[3])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('ocr',${page*PAGE_SIZE+i},window._ocrFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>${clinicCell}<td>${esc(r[4])}</td><td style="font-weight:700;">$${parseAmt(r[5]).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('ocr-empty').style.display=rows.length?'none':'block';
   renderPager('ocr',rows.length,page,'renderOCR');
 }
@@ -1132,7 +1132,7 @@ function renderPred(page=0){
   populateFilter('pred-f-clinic',all.map(r=>r[2]));populateFilter('pred-f-cat',all.map(r=>r[10]));
   window._predFiltered=rows;
   const sliced=rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
-  document.getElementById('pred-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('pred',${page*PAGE_SIZE+i},window._predFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td><td><span class="clinic-chip">${esc(r[2])}</span></td><td>${esc(r[3])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td><td>${esc(r[5])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${esc(r[10])}</td></tr>`;}).join('');
+  document.getElementById('pred-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[2])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('pred',${page*PAGE_SIZE+i},window._predFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td>${clinicCell}<td>${esc(r[3])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('pred-empty').style.display=rows.length?'none':'block';
   renderPager('pred',rows.length,page,'renderPred');
 }
@@ -1588,6 +1588,12 @@ async function enterWorkspace(email,clinics){
 }
 
 function applyRoleUI(){
+  // Hide clinic column header for non-admin roles
+  const clinicHeaders=['hco-th-clinic','pp-th-clinic','ptar-th-clinic','ocr-th-clinic','pred-th-clinic'];
+  clinicHeaders.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=currentRole==='admin'?'':'none';
+  });
   if(currentRole==='desk'){
     document.querySelectorAll('.chart-wrap').forEach(el=>{el.closest('.card')&&(el.closest('.card').style.display='none');});
     setTimeout(()=>{['hco-f-status','ptar-f-status'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='open';el.dispatchEvent(new Event('change'));}});},500);
