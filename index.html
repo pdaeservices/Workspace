@@ -1558,7 +1558,10 @@ document.getElementById('gate-enter').addEventListener('click',()=>{
   if(roleInfo&&(pw===roleInfo.password||pw===TEMP_PASSWORD)){
     let clinics=roleInfo.clinics;if(!clinics){clinics=selectedClinic?[selectedClinic]:ALL_CLINICS;}
     if(selectedClinic&&!clinics.includes(selectedClinic)){err.style.display='block';return;}
-    err.style.display='none';currentRole=roleInfo.role;enterWorkspace(username,clinics);return;
+    err.style.display='none';
+    // If a specific clinic was selected on landing, treat as manager regardless of credentials
+    currentRole = selectedClinic ? 'manager' : roleInfo.role;
+    enterWorkspace(username,clinics);return;
   }
   let clinics=null;
   if(EMAIL_CLINICS[username]){const expectedPw=PASSWORDS[username]||TEMP_PASSWORD;if(pw===expectedPw||pw===TEMP_PASSWORD){clinics=EMAIL_CLINICS[username];}}
