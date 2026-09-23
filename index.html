@@ -829,6 +829,24 @@ function isPending(comment){ return !String(comment||'').trim(); }
 function closeModal(id){ document.getElementById(id).style.display='none'; }
 function openModal(id){ document.getElementById(id).style.display='flex'; }
 
+function applyClinicVisibility(){
+  const isAdmin = currentRole==='admin';
+  // Headers
+  ['hco-th-clinic','pp-th-clinic','ptar-th-clinic','ocr-th-clinic','pred-th-clinic'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=isAdmin?'':'none';
+  });
+  // Filter dropdowns
+  ['hco-f-clinic','pp-f-clinic','ptar-f-clinic','ocr-f-clinic','pred-f-clinic'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.style.display=isAdmin?'':'none';
+      const lbl=el.previousElementSibling;
+      if(lbl&&lbl.tagName==='LABEL') lbl.style.display=isAdmin?'':'none';
+    }
+  });
+}
+
 function urgencyBadge(dateVal, commentVal){
   if(!isPending(commentVal)) return '<td></td>';
   const age = daysAgo(dateVal);
@@ -997,6 +1015,7 @@ function renderHCO(page=0){
   document.getElementById('hco-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[7]);const urgClass=urgencyRowClass(r[0],r[7]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[9])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[7])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('hco',${page*PAGE_SIZE+i},window._hcoFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>${clinicCell}<td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[6])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td>${statusBadge(r[7],r[1])}</td></tr>`;}).join('');
   document.getElementById('hco-empty').style.display=rows.length?'none':'block';
   renderPager('hco',rows.length,page,'renderHCO');
+  applyClinicVisibility();
 }
 function filterHCOByCategory(cat){_filters.hco=cat;document.getElementById('hco-f-cat').value=cat;renderHCO(0);}
 ['hco-f-clinic','hco-f-cat','hco-f-status'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{_filters.hco='';renderHCO(0);}));
@@ -1029,6 +1048,7 @@ function renderPP(page=0){
   document.getElementById('pp-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[7]);const urgClass=urgencyRowClass(r[0],r[7]);const rowClass=resolved?'row-resolved':(urgClass||'');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[9])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[7])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('pp',${page*PAGE_SIZE+i},window._ppFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>${clinicCell}<td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[10])}</td><td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('pp-empty').style.display=rows.length?'none':'block';
   renderPager('pp',rows.length,page,'renderPP');
+  applyClinicVisibility();
 }
 ['pp-f-clinic','pp-f-cat'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderPP(0)));
 document.getElementById('pp-search').addEventListener('input',()=>renderPP(0));
@@ -1058,6 +1078,7 @@ function renderPTAR(page=0){
   document.getElementById('ptar-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[3])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('ptar',${page*PAGE_SIZE+i},window._ptarFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td><td>${esc(r[2])}</td>${clinicCell}<td style="font-weight:800;color:${resolved?'var(--green)':'var(--red)'};">${parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0)>0?'<span style="font-size:10px;opacity:.7;">$</span>'+parseFloat(String(r[4]||'').replace(/[^0-9.]/g,'')||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('ptar-empty').style.display=rows.length?'none':'block';
   renderPager('ptar',rows.length,page,'renderPTAR');
+  applyClinicVisibility();
 }
 ['ptar-f-clinic','ptar-f-cat','ptar-f-status'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderPTAR(0)));
 document.getElementById('ptar-search').addEventListener('input',()=>renderPTAR(0));
@@ -1101,6 +1122,7 @@ function renderOCR(page=0){
   document.getElementById('ocr-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[3])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('ocr',${page*PAGE_SIZE+i},window._ocrFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[2])}</span></b></td>${clinicCell}<td>${esc(r[4])}</td><td style="font-weight:700;">$${parseAmt(r[5]).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('ocr-empty').style.display=rows.length?'none':'block';
   renderPager('ocr',rows.length,page,'renderOCR');
+  applyClinicVisibility();
 }
 ['ocr-f-clinic','ocr-f-cat'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderOCR(0)));
 document.getElementById('ocr-search').addEventListener('input',()=>renderOCR(0));
@@ -1135,6 +1157,7 @@ function renderPred(page=0){
   document.getElementById('pred-tbody').innerHTML=sliced.map((r,i)=>{const resolved=!isPending(r[8]);const urgClass=urgencyRowClass(r[0],r[8]);const rowClass=resolved?'row-resolved':(urgClass||'row-pending');const clinicCell=currentRole==='admin'?`<td><span class="clinic-chip">${esc(r[2])}</span></td>`:'';return `<tr class="${rowClass}">${urgencyBadge(r[0],r[8])}<td>${esc(r[0])}</td><td><b><span onclick="showUnifiedDetail('pred',${page*PAGE_SIZE+i},window._predFiltered)" style="cursor:pointer;color:var(--navy);text-decoration:underline;">${esc(r[1])}</span></b></td>${clinicCell}<td>${esc(r[3])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[4])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[7])}</td><td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r[8])}</td><td>${resolved?'<span class="badge resolved">Resolved</span>':'<span class="badge open">Open</span>'}</td></tr>`;}).join('');
   document.getElementById('pred-empty').style.display=rows.length?'none':'block';
   renderPager('pred',rows.length,page,'renderPred');
+  applyClinicVisibility();
 }
 ['pred-f-clinic','pred-f-cat'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{_filters.pred='';renderPred(0);}));
 document.getElementById('pred-search').addEventListener('input',()=>renderPred(0));
