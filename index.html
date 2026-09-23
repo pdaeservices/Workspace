@@ -1540,7 +1540,10 @@ document.getElementById('gate-enter').addEventListener('click',()=>{
   let clinics=null;
   if(EMAIL_CLINICS[username]){const expectedPw=PASSWORDS[username]||TEMP_PASSWORD;if(pw===expectedPw||pw===TEMP_PASSWORD){clinics=EMAIL_CLINICS[username];}}
   if(!clinics||(selectedClinic&&!clinics.includes(selectedClinic))){err.style.display='block';return;}
-  err.style.display='none';currentRole='admin';enterWorkspace(username,clinics);
+  err.style.display='none';
+  // If logging in via email to a specific clinic, treat as manager not admin
+  currentRole = (clinics.length === ALL_CLINICS.length) ? 'admin' : 'manager';
+  enterWorkspace(username,clinics);
 });
 
 document.getElementById('btn-switch').addEventListener('click',()=>{
@@ -1593,6 +1596,16 @@ function applyRoleUI(){
   clinicHeaders.forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display=currentRole==='admin'?'':'none';
+  });
+  // Hide clinic filter dropdowns for non-admin
+  const clinicFilters=['hco-f-clinic','pp-f-clinic','ptar-f-clinic','ocr-f-clinic','pred-f-clinic'];
+  clinicFilters.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      const label=el.previousElementSibling;
+      el.style.display=currentRole==='admin'?'':'none';
+      if(label&&label.tagName==='LABEL') label.style.display=currentRole==='admin'?'':'none';
+    }
   });
   if(currentRole==='desk'){
     document.querySelectorAll('.chart-wrap').forEach(el=>{el.closest('.card')&&(el.closest('.card').style.display='none');});
