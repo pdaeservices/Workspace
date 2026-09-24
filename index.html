@@ -1153,15 +1153,15 @@ function renderPred(page=0){
   // For onshore (non-admin): only show Pending and Partially Submitted action statuses
   if(currentRole!=='admin'){
     rows=rows.filter(r=>{
-      const status=(r[12]||'').toString().trim().toLowerCase();
-      return status==='pending' || status==='partially submitted';
+      const status=(r[10]||'').toString().trim().toLowerCase();
+      return status.includes('pending') || status.includes('partially submitted');
     });
   }
   rows=filterByDateRange(rows,0,_dateFilters['pred']||'all');rows=sortOpenFirst(rows,0,8);
   const predBar=document.getElementById('pred-date-bar');if(predBar) predBar.innerHTML=makeDateRangeBar('pred');
   // For onshore: KPIs reflect only Pending + Partially Submitted records
   const kpiBase = currentRole!=='admin'
-    ? rows.filter(r=>{const s=(r[12]||'').toString().trim().toLowerCase(); return s==='pending'||s==='partially submitted';})
+    ? all.filter(r=>{const s=(r[10]||'').toString().trim().toLowerCase(); return s.includes('pending')||s.includes('partially submitted');})
     : all;
   const approved=kpiBase.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
   const denied=kpiBase.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
