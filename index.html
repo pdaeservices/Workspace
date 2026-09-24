@@ -1150,6 +1150,13 @@ function renderPred(page=0){
   const search=document.getElementById('pred-search').value.trim().toLowerCase();
   const predStatus=window._predStatusFilter||'';
   let rows=all.filter(r=>{if(clinic&&r[2]!==clinic) return false;if(cat&&r[10]!==cat) return false;if(search&&!String(r[1]||'').toLowerCase().includes(search)) return false;if(predStatus==='open'&&!isPending(r[8])) return false;if(predStatus==='resolved'&&isPending(r[8])) return false;return true;});
+  // For onshore (non-admin): only show Pending and Partially Submitted action statuses
+  if(currentRole!=='admin'){
+    rows=rows.filter(r=>{
+      const status=(r[12]||'').toString().trim().toLowerCase();
+      return status==='pending' || status==='partially submitted';
+    });
+  }
   rows=filterByDateRange(rows,0,_dateFilters['pred']||'all');rows=sortOpenFirst(rows,0,8);
   const predBar=document.getElementById('pred-date-bar');if(predBar) predBar.innerHTML=makeDateRangeBar('pred');
   const approved=all.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
