@@ -848,11 +848,18 @@ function applyClinicVisibility(){
       if(lbl&&lbl.tagName==='LABEL') lbl.style.display=isAdmin?'':'none';
     }
   });
-  // Hide chart cards for non-admin (onshore view)
+  // Hide chart cards and Sunbit tab for non-admin (onshore view)
   ['hco-chart-card','pp-chart-card','pred-chart-card'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display=isAdmin?'':'none';
   });
+  // Hide Sunbit tab for non-admin
+  document.querySelectorAll('.scope-tab').forEach(function(tab){
+    if(tab.textContent.trim().indexOf('Sunbit')>-1) tab.style.display=isAdmin?'':'none';
+  });
+  // Hide Sunbit panel for non-admin
+  const sunbitPanel=document.getElementById('scope-sunbit');
+  if(sunbitPanel) sunbitPanel.style.display=isAdmin?'':'none';
   // Hide clinic breakdown cards for non-admin
   ['hco-clinic-breakdown','pp-clinic-breakdown','ptar-clinic-breakdown','ocr-clinic-breakdown'].forEach(id=>{
     const el=document.getElementById(id);
