@@ -1159,14 +1159,18 @@ function renderPred(page=0){
   }
   rows=filterByDateRange(rows,0,_dateFilters['pred']||'all');rows=sortOpenFirst(rows,0,8);
   const predBar=document.getElementById('pred-date-bar');if(predBar) predBar.innerHTML=makeDateRangeBar('pred');
-  const approved=all.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
-  const denied=all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
-  const pending=all.filter(r=>String(r[10]||'').toLowerCase().includes('pending')||String(r[10]||'').toLowerCase().includes('submitted')).length;
-  document.getElementById('pred-kpi-total').textContent=all.length.toLocaleString();
+  // For onshore: KPIs reflect only Pending + Partially Submitted records
+  const kpiBase = currentRole!=='admin'
+    ? rows.filter(r=>{const s=(r[12]||'').toString().trim().toLowerCase(); return s==='pending'||s==='partially submitted';})
+    : all;
+  const approved=kpiBase.filter(r=>String(r[10]||'').toLowerCase().includes('approved')).length;
+  const denied=kpiBase.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).length;
+  const pending=kpiBase.filter(r=>String(r[10]||'').toLowerCase().includes('pending')||String(r[10]||'').toLowerCase().includes('submitted')).length;
+  document.getElementById('pred-kpi-total').textContent=kpiBase.length.toLocaleString();
   document.getElementById('pred-kpi-approved').textContent=approved.toLocaleString();
   document.getElementById('pred-kpi-denied').textContent=denied.toLocaleString();
   document.getElementById('pred-kpi-pending').textContent=pending.toLocaleString();
-  updatePRDashboard('pred',all,8);
+  updatePRDashboard('pred',currentRole!=='admin'?rows:all,8);
   makeChart('pred-approval-chart',['Approved','Denied','Pending','Submitted'],[approved,denied,pending,all.filter(r=>String(r[10]||'').toLowerCase()==='pre-d submitted').length],'doughnut',function(label){document.getElementById('pred-f-cat').value=label.toLowerCase();_filters.pred=label.toLowerCase();renderPred(0);document.getElementById('pred-tbody').scrollIntoView({behavior:'smooth'});});
   const byDenial={};all.filter(r=>String(r[10]||'').toLowerCase().includes('denied')).forEach(r=>{const c=r[11]||'Other';byDenial[c]=(byDenial[c]||0)+1;});
   const dl=Object.keys(byDenial).sort((a,b)=>byDenial[b]-byDenial[a]).slice(0,8);
