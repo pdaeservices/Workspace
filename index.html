@@ -157,6 +157,9 @@ tr.row-resolved:hover td{background:#F0FDF4 !important;}
 tr.row-overdue:hover td{background:#FEF2F2 !important;}
 tr.row-pending:hover td{background:#FFFBEB !important;}
 
+/* Hide charts for non-admin */
+.hide-for-onshore{display:none !important;}
+
 /* Urgency row highlight */
 tr.row-urg-amber td{background:#FFFDF7 !important;border-left:2px solid #D97706 !important;}
 tr.row-urg-red td{background:#FFFAFA !important;border-left:2px solid #DC2626 !important;}
@@ -298,7 +301,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
       <p class="sub" id="hco-today-sub">Open items across your clinic(s) by category — click a card to filter the list below.</p>
       <div class="today-grid" id="hco-today-grid"></div>
     </div>
-    <div class="card">
+    <div class="card" id="hco-chart-card">
       <h3>Pending items by category</h3>
       <p class="sub">All open items — click a slice to filter the table below.</p>
       <div class="chart-wrap"><canvas id="hco-pie"></canvas></div>
@@ -340,7 +343,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
       <div class="kpi"><div class="label">Next Appt Missing (T7)</div><div class="value" style="color:var(--amber)" id="pp-kpi-t7">—</div></div>
       <div class="kpi"><div class="label">Doc Missing (T8)</div><div class="value" style="color:#7C5CBF" id="pp-kpi-t8">—</div></div>
     </div>
-    <div class="card">
+    <div class="card" id="pp-chart-card">
       <h3>Issue breakdown</h3>
       <p class="sub">PP Audit categories from Ashwini's daily emails.</p>
       <div class="chart-wrap"><canvas id="pp-pie"></canvas></div>
@@ -508,7 +511,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
       <div class="kpi"><div class="label">Denied</div><div class="value red" id="pred-kpi-denied">—</div></div>
       <div class="kpi"><div class="label">Pending</div><div class="value" style="color:var(--amber)" id="pred-kpi-pending">—</div></div>
     </div>
-    <div class="card">
+    <div class="card" id="pred-chart-card">
       <h3>Approval &amp; Denial overview</h3>
       <p class="sub">Approval outcomes (left) — click a slice to filter the table.</p>
       <div class="grid2">
@@ -844,6 +847,16 @@ function applyClinicVisibility(){
       const lbl=el.previousElementSibling;
       if(lbl&&lbl.tagName==='LABEL') lbl.style.display=isAdmin?'':'none';
     }
+  });
+  // Hide chart cards for non-admin (onshore view)
+  ['hco-chart-card','pp-chart-card','pred-chart-card'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=isAdmin?'':'none';
+  });
+  // Hide clinic breakdown cards for non-admin
+  ['hco-clinic-breakdown','pp-clinic-breakdown','ptar-clinic-breakdown','ocr-clinic-breakdown'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=isAdmin?'':'none';
   });
 }
 
