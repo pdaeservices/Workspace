@@ -21,7 +21,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
-.wrap{max-width:1060px;margin:0 auto;padding:20px 20px 60px;}
+.wrap{max-width:1340px;margin:0 auto;padding:20px 20px 60px;}
 
 /* Landing */
 #landing{display:block;}
@@ -199,6 +199,31 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
 
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:640px){.grid2{grid-template-columns:1fr;}.clinic-grid{padding:0 16px 40px;}.land-header{padding:20px 16px;}}
+
+/* ── ANALYTICS SIDEBAR LAYOUT ── */
+.scope-layout{display:flex;gap:16px;align-items:flex-start;}
+.analytics-panel{width:260px;flex-shrink:0;transition:width .25s,opacity .25s,padding .25s;overflow:hidden;min-width:0;}
+.analytics-panel-inner{width:260px;}
+.analytics-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--navy);border-radius:8px 8px 0 0;margin-bottom:0;}
+.analytics-header .analytics-title{font-size:11px;font-weight:700;color:#fff;letter-spacing:.06em;text-transform:uppercase;}
+.analytics-close-btn{background:none;border:none;color:rgba(255,255,255,.7);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;font-weight:400;}
+.analytics-close-btn:hover{color:#fff;opacity:1;}
+.analytics-panel .kpi-row{grid-template-columns:1fr 1fr;gap:6px;}
+.analytics-panel .kpi{padding:9px 10px;}
+.analytics-panel .kpi .value{font-size:16px;}
+.analytics-panel .card{padding:12px 12px;margin-bottom:8px;}
+.analytics-panel .chart-wrap{height:160px;}
+.analytics-panel .today-grid{grid-template-columns:1fr 1fr;}
+.analytics-panel .today-card{padding:8px;}
+.analytics-panel .pr-dashboard{gap:5px;}
+.analytics-panel .pr-card{padding:4px 9px;font-size:10.5px;}
+.analytics-hidden .analytics-panel{width:0;opacity:0;pointer-events:none;}
+.scope-body{flex:1;min-width:0;}
+.analytics-toggle-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;background:rgba(255,255,255,.12);border:0.5px solid rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.analytics-toggle-btn:hover{background:rgba(255,255,255,.2);}
+.analytics-toggle-btn .toggle-icon{font-size:13px;transition:transform .2s;}
+.analytics-hidden-state .toggle-icon{transform:none;}
+@media(max-width:800px){.scope-layout{flex-direction:column;}.analytics-panel,.analytics-hidden .analytics-panel{width:100%;opacity:1;pointer-events:auto;}.analytics-hidden .analytics-panel{display:none;}}
 </style>
 </head>
 <body>
@@ -260,6 +285,7 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
     </div>
     <div id="sync-badge"></div>
     <div id="last-sync-time" style="font-size:10px;color:rgba(255,255,255,.65);padding:4px 8px;background:rgba(255,255,255,.1);border-radius:6px;"></div>
+    <button class="analytics-toggle-btn" id="analytics-toggle-btn" onclick="toggleAnalytics()"><span class="toggle-icon">📊</span> Analytics</button>
     <button class="sw" id="btn-refresh" onclick="refreshData()">🔄 Refresh</button>
     <button class="sw" id="btn-switch">Switch user</button>
   </div>
@@ -279,263 +305,306 @@ tr.row-urg-red:hover td{background:#FFF0F0 !important;}
 
   <!-- HCO AUDITS -->
   <div class="scope-panel active" id="scope-hco">
-    <div class="pr-dashboard">
-      <div class="pr-card pending" id="hco-pr-pending" onclick="filterByStatus('hco','open')">
-        <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
-        <span class="pr-value" id="hco-pr-pending-val">—</span>
-        <span class="pr-pct" id="hco-pr-pending-pct"></span>
+    <div class="scope-layout">
+      <div class="analytics-panel" id="hco-analytics">
+        <div class="analytics-panel-inner">
+          <div class="analytics-header"><span class="analytics-title">📊 Analytics</span><button class="analytics-close-btn" onclick="toggleAnalytics()" title="Hide analytics">✕</button></div>
+          <div class="pr-dashboard">
+            <div class="pr-card pending" id="hco-pr-pending" onclick="filterByStatus('hco','open')">
+              <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
+              <span class="pr-value" id="hco-pr-pending-val">—</span>
+              <span class="pr-pct" id="hco-pr-pending-pct"></span>
+            </div>
+            <div class="pr-card resolved" id="hco-pr-resolved" onclick="filterByStatus('hco','resolved')">
+              <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
+              <span class="pr-value" id="hco-pr-resolved-val">—</span>
+              <span class="pr-pct" id="hco-pr-resolved-pct"></span>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="label">Total Records</div><div class="value" id="hco-kpi-total">—</div></div>
+            <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="hco-kpi-open">—</div></div>
+            <div class="kpi"><div class="label">Resolved</div><div class="value green" id="hco-kpi-resolved">—</div></div>
+          </div>
+          <div class="card">
+            <h3>Today at a glance</h3>
+            <p class="sub" id="hco-today-sub">Open items by category — click to filter.</p>
+            <div class="today-grid" id="hco-today-grid"></div>
+          </div>
+          <div class="card" id="hco-chart-card">
+            <h3>Pending by category</h3>
+            <p class="sub">Click a slice to filter the table.</p>
+            <div class="chart-wrap"><canvas id="hco-pie"></canvas></div>
+          </div>
+          <div class="card" id="hco-clinic-breakdown" style="display:none;">
+            <h3>Clinic breakdown</h3>
+            <p class="sub">How each clinic stands.</p>
+            <div class="tbl-wrap">
+              <table class="breakdown-tbl"><thead><tr><th>Clinic</th><th>Total</th><th>Open</th><th>Resolved</th><th>Overdue</th></tr></thead>
+              <tbody id="hco-breakdown-tbody"></tbody></table>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="pr-card resolved" id="hco-pr-resolved" onclick="filterByStatus('hco','resolved')">
-        <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
-        <span class="pr-value" id="hco-pr-resolved-val">—</span>
-        <span class="pr-pct" id="hco-pr-resolved-pct"></span>
+      <div class="scope-body">
+        <div class="card">
+          <h3>Walkout Audit History</h3>
+          <p class="sub">All records from HCO_Master_Input. Pending = Onshore Comment is blank.</p>
+          <div id="hco-date-bar"></div>
+          <div class="filter-row">
+            <label>Clinic:</label><select id="hco-f-clinic"><option value="">All clinics</option></select>
+            <label>Category:</label><select id="hco-f-cat"><option value="">All categories</option></select>
+            <label>Status:</label><select id="hco-f-status"><option value="">All</option><option value="open">Open</option><option value="resolved">Resolved</option><option value="overdue">Overdue</option></select>
+            <label>Search Patient:</label><input type="text" id="hco-search" placeholder="e.g. 12345" style="width:110px;">
+            <button class="sec sm" id="hco-clear">Clear</button>
+            <button class="sm" onclick="exportCSV('hco')">⬇ Export Filtered</button>
+          </div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>Patient ID</th><th id="hco-th-clinic">Clinic</th><th>Category</th><th>HCO Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+            <tbody id="hco-tbody"></tbody></table>
+          </div>
+          <div class="empty" id="hco-empty" style="display:none;">No records match this filter.</div>
+          <div class="pager" id="hco-pager"></div>
+        </div>
       </div>
-    </div>
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">Total Records</div><div class="value" id="hco-kpi-total">—</div></div>
-      <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="hco-kpi-open">—</div></div>
-      <div class="kpi"><div class="label">Resolved</div><div class="value green" id="hco-kpi-resolved">—</div></div>
-    </div>
-    <div class="card">
-      <h3>Today at a glance</h3>
-      <p class="sub" id="hco-today-sub">Open items across your clinic(s) by category — click a card to filter the list below.</p>
-      <div class="today-grid" id="hco-today-grid"></div>
-    </div>
-    <div class="card" id="hco-chart-card">
-      <h3>Pending items by category</h3>
-      <p class="sub">All open items — click a slice to filter the table below.</p>
-      <div class="chart-wrap"><canvas id="hco-pie"></canvas></div>
-    </div>
-    <div class="card" id="hco-clinic-breakdown" style="display:none;">
-      <h3>Clinic breakdown</h3>
-      <p class="sub">How each clinic stands across this scope.</p>
-      <div class="tbl-wrap">
-        <table class="breakdown-tbl"><thead><tr><th>Clinic</th><th>Total</th><th>Open</th><th>Resolved</th><th>Overdue</th></tr></thead>
-        <tbody id="hco-breakdown-tbody"></tbody></table>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Walkout Audit History</h3>
-      <p class="sub">All records from HCO_Master_Input. Pending = Onshore Comment is blank.</p>
-      <div id="hco-date-bar"></div>
-      <div class="filter-row">
-        <label>Clinic:</label><select id="hco-f-clinic"><option value="">All clinics</option></select>
-        <label>Category:</label><select id="hco-f-cat"><option value="">All categories</option></select>
-        <label>Status:</label><select id="hco-f-status"><option value="">All</option><option value="open">Open</option><option value="resolved">Resolved</option><option value="overdue">Overdue</option></select>
-        <label>Search Patient:</label><input type="text" id="hco-search" placeholder="e.g. 12345" style="width:110px;">
-        <button class="sec sm" id="hco-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('hco')">⬇ Export Filtered</button>
-      </div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>Patient ID</th><th id="hco-th-clinic">Clinic</th><th>Category</th><th>HCO Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
-        <tbody id="hco-tbody"></tbody></table>
-      </div>
-      <div class="empty" id="hco-empty" style="display:none;">No records match this filter.</div>
-      <div class="pager" id="hco-pager"></div>
     </div>
   </div>
 
   <!-- PP AUDITS -->
   <div class="scope-panel" id="scope-pp">
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">Total Records</div><div class="value" id="pp-kpi-total">—</div></div>
-      <div class="kpi"><div class="label">HCO Findings (T6)</div><div class="value red" id="pp-kpi-t6">—</div></div>
-      <div class="kpi"><div class="label">Next Appt Missing (T7)</div><div class="value" style="color:var(--amber)" id="pp-kpi-t7">—</div></div>
-      <div class="kpi"><div class="label">Doc Missing (T8)</div><div class="value" style="color:#7C5CBF" id="pp-kpi-t8">—</div></div>
-    </div>
-    <div class="card" id="pp-chart-card">
-      <h3>Issue breakdown</h3>
-      <p class="sub">PP Audit categories from Ashwini's daily emails.</p>
-      <div class="chart-wrap"><canvas id="pp-pie"></canvas></div>
-    </div>
-    <div class="card" id="pp-clinic-breakdown" style="display:none;">
-      <h3>Clinic breakdown</h3>
-      <div class="tbl-wrap">
-        <table class="breakdown-tbl"><thead><tr><th>Clinic</th><th>Total</th><th>Table 6</th><th>Table 7</th><th>Table 8</th></tr></thead>
-        <tbody id="pp-breakdown-tbody"></tbody></table>
+    <div class="scope-layout">
+      <div class="analytics-panel" id="pp-analytics">
+        <div class="analytics-panel-inner">
+          <div class="analytics-header"><span class="analytics-title">📊 Analytics</span><button class="analytics-close-btn" onclick="toggleAnalytics()" title="Hide analytics">✕</button></div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="label">Total Records</div><div class="value" id="pp-kpi-total">—</div></div>
+            <div class="kpi"><div class="label">HCO Findings (T6)</div><div class="value red" id="pp-kpi-t6">—</div></div>
+            <div class="kpi"><div class="label">Next Appt Missing (T7)</div><div class="value" style="color:var(--amber)" id="pp-kpi-t7">—</div></div>
+            <div class="kpi"><div class="label">Doc Missing (T8)</div><div class="value" style="color:#7C5CBF" id="pp-kpi-t8">—</div></div>
+          </div>
+          <div class="card" id="pp-chart-card">
+            <h3>Issue breakdown</h3>
+            <p class="sub">PP Audit categories.</p>
+            <div class="chart-wrap"><canvas id="pp-pie"></canvas></div>
+          </div>
+          <div class="card" id="pp-clinic-breakdown" style="display:none;">
+            <h3>Clinic breakdown</h3>
+            <div class="tbl-wrap">
+              <table class="breakdown-tbl"><thead><tr><th>Clinic</th><th>Total</th><th>Table 6</th><th>Table 7</th><th>Table 8</th></tr></thead>
+              <tbody id="pp-breakdown-tbody"></tbody></table>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="card">
-      <h3>Recent PP Audit activity</h3>
-      <p class="sub">All records from HCO_Master_Input PP Audits tab.</p>
-      <div id="pp-date-bar"></div>
-      <div class="filter-row">
-        <label>Clinic:</label><select id="pp-f-clinic"><option value="">All clinics</option></select>
-        <label>Category:</label><select id="pp-f-cat"><option value="">All categories</option></select>
-        <label>Search Patient:</label><input type="text" id="pp-search" placeholder="e.g. 2378" style="width:110px;">
-        <button class="sec sm" id="pp-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('pp')">⬇ Export Filtered</button>
+      <div class="scope-body">
+        <div class="card">
+          <h3>Recent PP Audit activity</h3>
+          <p class="sub">All records from HCO_Master_Input PP Audits tab.</p>
+          <div id="pp-date-bar"></div>
+          <div class="filter-row">
+            <label>Clinic:</label><select id="pp-f-clinic"><option value="">All clinics</option></select>
+            <label>Category:</label><select id="pp-f-cat"><option value="">All categories</option></select>
+            <label>Search Patient:</label><input type="text" id="pp-search" placeholder="e.g. 2378" style="width:110px;">
+            <button class="sec sm" id="pp-clear">Clear</button>
+            <button class="sm" onclick="exportCSV('pp')">⬇ Export Filtered</button>
+          </div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>Patient ID</th><th id="pp-th-clinic">Clinic</th><th>Category</th><th>Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+            <tbody id="pp-tbody"></tbody></table>
+          </div>
+          <div class="empty" id="pp-empty" style="display:none;">No records match this filter.</div>
+          <div class="pager" id="pp-pager"></div>
+        </div>
       </div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Audit Date</th><th>Patient ID</th><th id="pp-th-clinic">Clinic</th><th>Category</th><th>Comment</th><th>Onshore Comment</th><th>Status</th></tr></thead>
-        <tbody id="pp-tbody"></tbody></table>
-      </div>
-      <div class="empty" id="pp-empty" style="display:none;">No records match this filter.</div>
-      <div class="pager" id="pp-pager"></div>
     </div>
   </div>
 
   <!-- PTAR -->
   <div class="scope-panel" id="scope-ptar">
-    <div class="pr-dashboard">
-      <div class="pr-card pending" id="ptar-pr-pending" onclick="filterByStatus('ptar','open')">
-        <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
-        <span class="pr-value" id="ptar-pr-pending-val">—</span>
-        <span class="pr-pct" id="ptar-pr-pending-pct"></span>
+    <div class="scope-layout">
+      <div class="analytics-panel" id="ptar-analytics">
+        <div class="analytics-panel-inner">
+          <div class="analytics-header"><span class="analytics-title">📊 Analytics</span><button class="analytics-close-btn" onclick="toggleAnalytics()" title="Hide analytics">✕</button></div>
+          <div class="pr-dashboard">
+            <div class="pr-card pending" id="ptar-pr-pending" onclick="filterByStatus('ptar','open')">
+              <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
+              <span class="pr-value" id="ptar-pr-pending-val">—</span>
+              <span class="pr-pct" id="ptar-pr-pending-pct"></span>
+            </div>
+            <div class="pr-card resolved" id="ptar-pr-resolved" onclick="filterByStatus('ptar','resolved')">
+              <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
+              <span class="pr-value" id="ptar-pr-resolved-val">—</span>
+              <span class="pr-pct" id="ptar-pr-resolved-pct"></span>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="label">Total Accounts</div><div class="value" id="ptar-kpi-total">—</div></div>
+            <div class="kpi"><div class="label">💰 Outstanding ($)</div><div class="value red" id="ptar-kpi-amount">—</div></div>
+            <div class="kpi"><div class="label">📋 Not Contacted</div><div class="value red" id="ptar-kpi-not-contacted">—</div></div>
+            <div class="kpi"><div class="label">✅ Contacted</div><div class="value green" id="ptar-kpi-contacted">—</div></div>
+            <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="ptar-kpi-open">—</div></div>
+            <div class="kpi"><div class="label">Resolved</div><div class="value green" id="ptar-kpi-resolved">—</div></div>
+          </div>
+          <div class="card" id="ptar-clinic-breakdown" style="display:none;">
+            <h3>🏥 Clinic Breakdown</h3>
+            <p class="sub">Click any row to filter.</p>
+            <div class="tbl-wrap">
+              <table class="breakdown-tbl">
+                <thead><tr><th>Clinic</th><th>Total</th><th>Outstanding ($)</th><th>Pending</th><th>Resolved</th><th>Not Contacted</th><th>Contacted</th></tr></thead>
+                <tbody id="ptar-breakdown-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="pr-card resolved" id="ptar-pr-resolved" onclick="filterByStatus('ptar','resolved')">
-        <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
-        <span class="pr-value" id="ptar-pr-resolved-val">—</span>
-        <span class="pr-pct" id="ptar-pr-resolved-pct"></span>
+      <div class="scope-body">
+        <div class="card">
+          <h3>PTAR collection reminders</h3>
+          <p class="sub">All accounts — Onshore Comment blank = pending action.</p>
+          <div id="ptar-date-bar"></div>
+          <div class="filter-row">
+            <label>Clinic:</label><select id="ptar-f-clinic"><option value="">All clinics</option></select>
+            <label>Category:</label><select id="ptar-f-cat"><option value="">All categories</option></select>
+            <label>Status:</label><select id="ptar-f-status"><option value="">All</option><option value="open">Open</option><option value="resolved">Resolved</option></select>
+            <label>Search Patient:</label><input type="text" id="ptar-search" placeholder="Patient ID" style="width:110px;">
+            <button class="sec sm" id="ptar-clear">Clear</button>
+            <button class="sm" onclick="exportCSV('ptar')">⬇ Export Filtered</button>
+          </div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Urgency</th><th>Date</th><th>Patient ID</th><th>PT Name</th><th id="ptar-th-clinic">Clinic</th><th>Outstanding</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
+            <tbody id="ptar-tbody"></tbody></table>
+          </div>
+          <div class="empty" id="ptar-empty" style="display:none;">No records match this filter.</div>
+          <div class="pager" id="ptar-pager"></div>
+        </div>
       </div>
-    </div>
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">Total Accounts</div><div class="value" id="ptar-kpi-total">—</div></div>
-      <div class="kpi"><div class="label">💰 Outstanding ($)</div><div class="value red" id="ptar-kpi-amount">—</div></div>
-      <div class="kpi"><div class="label">📋 Not Contacted</div><div class="value red" id="ptar-kpi-not-contacted">—</div></div>
-      <div class="kpi"><div class="label">✅ Contacted</div><div class="value green" id="ptar-kpi-contacted">—</div></div>
-      <div class="kpi"><div class="label">Open (Pending)</div><div class="value red" id="ptar-kpi-open">—</div></div>
-      <div class="kpi"><div class="label">Resolved</div><div class="value green" id="ptar-kpi-resolved">—</div></div>
-    </div>
-    <div class="card" id="ptar-clinic-breakdown" style="display:none;">
-      <h3>🏥 Clinic Breakdown</h3>
-      <p class="sub">Outstanding balance and pending accounts per clinic — click any row to filter.</p>
-      <div class="tbl-wrap">
-        <table class="breakdown-tbl">
-          <thead><tr><th>Clinic</th><th>Total</th><th>Outstanding ($)</th><th>Pending</th><th>Resolved</th><th>Not Contacted</th><th>Contacted</th></tr></thead>
-          <tbody id="ptar-breakdown-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <h3>PTAR collection reminders</h3>
-      <p class="sub">All accounts — Onshore Comment blank = pending action.</p>
-      <div id="ptar-date-bar"></div>
-      <div class="filter-row">
-        <label>Clinic:</label><select id="ptar-f-clinic"><option value="">All clinics</option></select>
-        <label>Category:</label><select id="ptar-f-cat"><option value="">All categories</option></select>
-        <label>Status:</label><select id="ptar-f-status"><option value="">All</option><option value="open">Open</option><option value="resolved">Resolved</option></select>
-        <label>Search Patient:</label><input type="text" id="ptar-search" placeholder="Patient ID" style="width:110px;">
-        <button class="sec sm" id="ptar-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('ptar')">⬇ Export Filtered</button>
-      </div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Date</th><th>Patient ID</th><th>PT Name</th><th id="ptar-th-clinic">Clinic</th><th>Outstanding</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
-        <tbody id="ptar-tbody"></tbody></table>
-      </div>
-      <div class="empty" id="ptar-empty" style="display:none;">No records match this filter.</div>
-      <div class="pager" id="ptar-pager"></div>
     </div>
   </div>
 
   <!-- OCR -->
   <div class="scope-panel" id="scope-ocr">
-    <div class="pr-dashboard">
-      <div class="pr-card pending" id="ocr-pr-pending" onclick="filterByStatus('ocr','open')">
-        <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
-        <span class="pr-value" id="ocr-pr-pending-val">—</span>
-        <span class="pr-pct" id="ocr-pr-pending-pct"></span>
+    <div class="scope-layout">
+      <div class="analytics-panel" id="ocr-analytics">
+        <div class="analytics-panel-inner">
+          <div class="analytics-header"><span class="analytics-title">📊 Analytics</span><button class="analytics-close-btn" onclick="toggleAnalytics()" title="Hide analytics">✕</button></div>
+          <div class="pr-dashboard">
+            <div class="pr-card pending" id="ocr-pr-pending" onclick="filterByStatus('ocr','open')">
+              <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
+              <span class="pr-value" id="ocr-pr-pending-val">—</span>
+              <span class="pr-pct" id="ocr-pr-pending-pct"></span>
+            </div>
+            <div class="pr-card resolved" id="ocr-pr-resolved" onclick="filterByStatus('ocr','resolved')">
+              <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
+              <span class="pr-value" id="ocr-pr-resolved-val">—</span>
+              <span class="pr-pct" id="ocr-pr-resolved-pct"></span>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="label">Total Claims</div><div class="value" id="ocr-kpi-total">—</div></div>
+            <div class="kpi"><div class="label">💵 Submitted $</div><div class="value" id="ocr-kpi-submitted">—</div></div>
+            <div class="kpi"><div class="label">💰 Paid $</div><div class="value green" id="ocr-kpi-paid">—</div></div>
+            <div class="kpi"><div class="label">📊 Collection %</div><div class="value" id="ocr-kpi-collection">—</div></div>
+            <div class="kpi"><div class="label">❌ Denied</div><div class="value red" id="ocr-kpi-denied">—</div></div>
+            <div class="kpi"><div class="label">🔴 Open</div><div class="value red" id="ocr-kpi-open">—</div></div>
+          </div>
+          <div class="card" id="ocr-clinic-breakdown" style="display:none;">
+            <h3>🏥 Clinic Breakdown</h3>
+            <p class="sub">Click any row to filter.</p>
+            <div class="tbl-wrap">
+              <table class="breakdown-tbl">
+                <thead><tr><th>Clinic</th><th>Total</th><th>Submitted $</th><th>Paid $</th><th>Collection %</th><th>Denied</th><th>Open</th></tr></thead>
+                <tbody id="ocr-breakdown-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="pr-card resolved" id="ocr-pr-resolved" onclick="filterByStatus('ocr','resolved')">
-        <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
-        <span class="pr-value" id="ocr-pr-resolved-val">—</span>
-        <span class="pr-pct" id="ocr-pr-resolved-pct"></span>
+      <div class="scope-body">
+        <div class="card">
+          <h3>📊 Claims Aging — Total Outcomes</h3>
+          <p class="sub">Based on Date Sent — how long claims have been outstanding.</p>
+          <div class="kpi-row" id="ocr-aging-kpis"></div>
+          <div class="tbl-wrap" style="margin-top:10px;">
+            <table>
+              <thead><tr><th>Aging Bucket</th><th>Claims</th><th>Submitted $</th><th>Paid $</th><th>Collection %</th><th>% of Total</th></tr></thead>
+              <tbody id="ocr-aging-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>All claims</h3>
+          <p class="sub">All OCR records — Onshore Comment blank = pending action.</p>
+          <div id="ocr-date-bar"></div>
+          <div class="filter-row">
+            <label>Clinic:</label><select id="ocr-f-clinic"><option value="">All clinics</option></select>
+            <label>Category:</label><select id="ocr-f-cat"><option value="">All categories</option></select>
+            <label>Search Patient:</label><input type="text" id="ocr-search" placeholder="Patient ID" style="width:110px;">
+            <button class="sec sm" id="ocr-clear">Clear</button>
+            <button class="sm" onclick="exportCSV('ocr')">⬇ Export Filtered</button>
+          </div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Urgency</th><th>Date Sent</th><th>Patient ID</th><th id="ocr-th-clinic">Clinic</th><th>Insurance</th><th>Submitted</th><th>Onshore Comment</th><th>Status</th></tr></thead>
+            <tbody id="ocr-tbody"></tbody></table>
+          </div>
+          <div class="empty" id="ocr-empty" style="display:none;">No records match this filter.</div>
+          <div class="pager" id="ocr-pager"></div>
+        </div>
       </div>
-    </div>
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">Total Claims</div><div class="value" id="ocr-kpi-total">—</div></div>
-      <div class="kpi"><div class="label">💵 Submitted $</div><div class="value" id="ocr-kpi-submitted">—</div></div>
-      <div class="kpi"><div class="label">💰 Paid $</div><div class="value green" id="ocr-kpi-paid">—</div></div>
-      <div class="kpi"><div class="label">📊 Collection %</div><div class="value" id="ocr-kpi-collection">—</div></div>
-      <div class="kpi"><div class="label">❌ Denied</div><div class="value red" id="ocr-kpi-denied">—</div></div>
-      <div class="kpi"><div class="label">🔴 Open</div><div class="value red" id="ocr-kpi-open">—</div></div>
-    </div>
-    <div class="card">
-      <h3>📊 Claims Aging — Total Outcomes</h3>
-      <p class="sub">Based on Date Sent — how long claims have been outstanding.</p>
-      <div class="kpi-row" id="ocr-aging-kpis"></div>
-      <div class="tbl-wrap" style="margin-top:10px;">
-        <table>
-          <thead><tr><th>Aging Bucket</th><th>Claims</th><th>Submitted $</th><th>Paid $</th><th>Collection %</th><th>% of Total</th></tr></thead>
-          <tbody id="ocr-aging-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card" id="ocr-clinic-breakdown" style="display:none;">
-      <h3>🏥 Clinic Breakdown</h3>
-      <p class="sub">Claims performance per clinic — click any row to filter.</p>
-      <div class="tbl-wrap">
-        <table class="breakdown-tbl">
-          <thead><tr><th>Clinic</th><th>Total</th><th>Submitted $</th><th>Paid $</th><th>Collection %</th><th>Denied</th><th>Open</th></tr></thead>
-          <tbody id="ocr-breakdown-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <h3>All claims</h3>
-      <p class="sub">All OCR records — Onshore Comment blank = pending action.</p>
-      <div id="ocr-date-bar"></div>
-      <div class="filter-row">
-        <label>Clinic:</label><select id="ocr-f-clinic"><option value="">All clinics</option></select>
-        <label>Category:</label><select id="ocr-f-cat"><option value="">All categories</option></select>
-        <label>Search Patient:</label><input type="text" id="ocr-search" placeholder="Patient ID" style="width:110px;">
-        <button class="sec sm" id="ocr-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('ocr')">⬇ Export Filtered</button>
-      </div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Date Sent</th><th>Patient ID</th><th id="ocr-th-clinic">Clinic</th><th>Insurance</th><th>Submitted</th><th>Onshore Comment</th><th>Status</th></tr></thead>
-        <tbody id="ocr-tbody"></tbody></table>
-      </div>
-      <div class="empty" id="ocr-empty" style="display:none;">No records match this filter.</div>
-      <div class="pager" id="ocr-pager"></div>
     </div>
   </div>
 
   <!-- PRE-D -->
   <div class="scope-panel" id="scope-pred">
-    <div class="pr-dashboard">
-      <div class="pr-card pending" id="pred-pr-pending" onclick="filterByStatus('pred','open')">
-        <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
-        <span class="pr-value" id="pred-pr-pending-val">—</span>
-        <span class="pr-pct" id="pred-pr-pending-pct"></span>
+    <div class="scope-layout">
+      <div class="analytics-panel" id="pred-analytics">
+        <div class="analytics-panel-inner">
+          <div class="analytics-header"><span class="analytics-title">📊 Analytics</span><button class="analytics-close-btn" onclick="toggleAnalytics()" title="Hide analytics">✕</button></div>
+          <div class="pr-dashboard">
+            <div class="pr-card pending" id="pred-pr-pending" onclick="filterByStatus('pred','open')">
+              <span class="pr-icon">🔴</span><span class="pr-label">Pending</span>
+              <span class="pr-value" id="pred-pr-pending-val">—</span>
+              <span class="pr-pct" id="pred-pr-pending-pct"></span>
+            </div>
+            <div class="pr-card resolved" id="pred-pr-resolved" onclick="filterByStatus('pred','resolved')">
+              <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
+              <span class="pr-value" id="pred-pr-resolved-val">—</span>
+              <span class="pr-pct" id="pred-pr-resolved-pct"></span>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="label">Total Requests</div><div class="value" id="pred-kpi-total">—</div></div>
+            <div class="kpi"><div class="label">Approved</div><div class="value green" id="pred-kpi-approved">—</div></div>
+            <div class="kpi"><div class="label">Denied</div><div class="value red" id="pred-kpi-denied">—</div></div>
+            <div class="kpi"><div class="label">Pending</div><div class="value" style="color:var(--amber)" id="pred-kpi-pending">—</div></div>
+          </div>
+          <div class="card" id="pred-chart-card">
+            <h3>Approval &amp; Denial overview</h3>
+            <p class="sub">Click a slice to filter the table.</p>
+            <div class="chart-wrap"><canvas id="pred-approval-chart"></canvas></div>
+            <div class="chart-wrap" style="margin-top:8px;"><canvas id="pred-denial-chart"></canvas></div>
+          </div>
+        </div>
       </div>
-      <div class="pr-card resolved" id="pred-pr-resolved" onclick="filterByStatus('pred','resolved')">
-        <span class="pr-icon">🟢</span><span class="pr-label">Resolved</span>
-        <span class="pr-value" id="pred-pr-resolved-val">—</span>
-        <span class="pr-pct" id="pred-pr-resolved-pct"></span>
+      <div class="scope-body">
+        <div class="card">
+          <h3>Recent requests</h3>
+          <p class="sub">All Pre-D/Pre-Auth records from HCO_Master_Input.</p>
+          <div id="pred-date-bar"></div>
+          <div class="filter-row">
+            <label>Clinic:</label><select id="pred-f-clinic"><option value="">All clinics</option></select>
+            <label>Category:</label><select id="pred-f-cat"><option value="">All categories</option></select>
+            <label>Search Patient:</label><input type="text" id="pred-search" placeholder="Patient ID" style="width:110px;">
+            <button class="sec sm" id="pred-clear">Clear</button>
+            <button class="sm" onclick="exportCSV('pred')">⬇ Export Filtered</button>
+          </div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Urgency</th><th>Date of Request</th><th>Patient ID</th><th id="pred-th-clinic">Clinic</th><th>Insurance</th><th>Procedure</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
+            <tbody id="pred-tbody"></tbody></table>
+          </div>
+          <div class="empty" id="pred-empty" style="display:none;">No records match this filter.</div>
+          <div class="pager" id="pred-pager"></div>
+        </div>
       </div>
-    </div>
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">Total Requests</div><div class="value" id="pred-kpi-total">—</div></div>
-      <div class="kpi"><div class="label">Approved</div><div class="value green" id="pred-kpi-approved">—</div></div>
-      <div class="kpi"><div class="label">Denied</div><div class="value red" id="pred-kpi-denied">—</div></div>
-      <div class="kpi"><div class="label">Pending</div><div class="value" style="color:var(--amber)" id="pred-kpi-pending">—</div></div>
-    </div>
-    <div class="card" id="pred-chart-card">
-      <h3>Approval &amp; Denial overview</h3>
-      <p class="sub">Approval outcomes (left) — click a slice to filter the table.</p>
-      <div class="grid2">
-        <div class="chart-wrap"><canvas id="pred-approval-chart"></canvas></div>
-        <div class="chart-wrap"><canvas id="pred-denial-chart"></canvas></div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Recent requests</h3>
-      <p class="sub">All Pre-D/Pre-Auth records from HCO_Master_Input.</p>
-      <div id="pred-date-bar"></div>
-      <div class="filter-row">
-        <label>Clinic:</label><select id="pred-f-clinic"><option value="">All clinics</option></select>
-        <label>Category:</label><select id="pred-f-cat"><option value="">All categories</option></select>
-        <label>Search Patient:</label><input type="text" id="pred-search" placeholder="Patient ID" style="width:110px;">
-        <button class="sec sm" id="pred-clear">Clear</button>
-        <button class="sm" onclick="exportCSV('pred')">⬇ Export Filtered</button>
-      </div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Urgency</th><th>Date of Request</th><th>Patient ID</th><th id="pred-th-clinic">Clinic</th><th>Insurance</th><th>Procedure</th><th>Offshore Comments</th><th>Onshore Comments</th><th>Status</th></tr></thead>
-        <tbody id="pred-tbody"></tbody></table>
-      </div>
-      <div class="empty" id="pred-empty" style="display:none;">No records match this filter.</div>
-      <div class="pager" id="pred-pager"></div>
     </div>
   </div>
 
@@ -1628,6 +1697,7 @@ function showScopeLoading(scope){
 async function enterWorkspace(email,clinics){
   currentUser=email;myClinics=selectedClinic?[selectedClinic]:clinics;
   document.getElementById('gate').style.display='none';document.getElementById('appview').style.display='block';
+  applyAnalyticsState();
   const roleLabels={admin:'Admin — Full Access',manager:'Onshore Manager',desk:'Front Desk'};
   document.getElementById('user-title').textContent=roleLabels[currentRole]||email;
   document.getElementById('user-clinics').textContent=myClinics.join(' · ')+(currentRole==='admin'&&myClinics.length===ALL_CLINICS.length?' — full access':' — your clinic');
@@ -1680,10 +1750,42 @@ document.querySelectorAll('.scope-tab').forEach(btn=>{
     btn.classList.add('active');
     const scope=btn.getAttribute('data-scope');
     document.getElementById('scope-'+scope).classList.add('active');
+    applyAnalyticsState();
     if(scope==='ack') renderAck();
     if(scope==='summary'){renderSummary();initWorkReport();}
   });
 });
+
+// ── ANALYTICS SIDEBAR TOGGLE ──────────────────────────────────────────────────
+let _analyticsHidden = true; // collapsed by default
+
+function toggleAnalytics(){
+  _analyticsHidden = !_analyticsHidden;
+  applyAnalyticsState();
+  try { localStorage.setItem('analyticsHidden', _analyticsHidden ? '1' : '0'); } catch(e){}
+}
+
+function applyAnalyticsState(){
+  document.querySelectorAll('.scope-layout').forEach(el=>{
+    el.classList.toggle('analytics-hidden', _analyticsHidden);
+  });
+  const btn = document.getElementById('analytics-toggle-btn');
+  if(btn){
+    btn.title = _analyticsHidden ? 'Show Analytics' : 'Hide Analytics';
+    btn.innerHTML = _analyticsHidden
+      ? '<span class="toggle-icon">📊</span> Analytics'
+      : '<span class="toggle-icon">📊</span> Hide';
+  }
+}
+
+// Restore state on load
+try {
+  const stored = localStorage.getItem('analyticsHidden');
+  if(stored === '0') _analyticsHidden = false;
+} catch(e){}
+
+// Apply after DOM ready — will be called once appview becomes visible
+document.addEventListener('DOMContentLoaded', function(){ applyAnalyticsState(); });
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 renderLanding();
